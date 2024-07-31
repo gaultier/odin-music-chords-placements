@@ -29,6 +29,8 @@ Step :: enum {
 }
 
 ScaleKind :: [7]Step
+major_scale :: ScaleKind{.Whole, .Whole, .Half, .Whole, .Whole, .Whole, .Half}
+minor_scale :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Whole}
 
 Scale :: [7]NoteKind
 
@@ -49,12 +51,32 @@ scale_for_note_kind :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
 	return res
 }
 
+Chord :: []u8
+major_chord :: Chord{0, 2, 4}
+
+make_major_chord :: proc(note_kind: NoteKind) -> [3]NoteKind {
+	scale := scale_for_note_kind(note_kind, major_scale)
+
+	res := [3]NoteKind{}
+
+	for pos, i in major_chord {
+		res[i] = scale[pos]
+	}
+	return res
+}
+
+StringInstrumentLayout :: []NoteKind
+
+
 main :: proc() {
-	major_scale := ScaleKind{.Whole, .Whole, .Half, .Whole, .Whole, .Whole, .Half}
-	minor_scale := ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Whole}
 
 	for note in NoteKind {
 		fmt.println(note, scale_for_note_kind(note, major_scale))
 		fmt.println(note, scale_for_note_kind(note, minor_scale))
+		fmt.println(note, make_major_chord(note))
+		fmt.println()
 	}
+
+
+	// banjo_layout := StringInstrumentLayout{.D, .G, .B, .D}
 }
