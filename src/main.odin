@@ -51,12 +51,14 @@ scale_for_note_kind :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
 	return res
 }
 
-Chord :: []u8
-major_chord :: Chord{0, 2, 4}
-major_chord_7 :: Chord{0, 2, 4, 6}
+ChordKind :: []u8
+major_chord :: ChordKind{0, 2, 4}
+major_chord_7 :: ChordKind{0, 2, 4, 6}
 
-make_major_chord :: proc(scale: Scale) -> [3]NoteKind {
-	res := [3]NoteKind{}
+Chord :: []NoteKind
+
+make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
+	res := make([]NoteKind, len(chord_kind))
 
 	for pos, i in major_chord {
 		res[i] = scale[pos]
@@ -64,20 +66,10 @@ make_major_chord :: proc(scale: Scale) -> [3]NoteKind {
 	return res
 }
 
-make_major_chord_7 :: proc(scale: Scale) -> [4]NoteKind {
-	res := [4]NoteKind{}
-
-	for pos, i in major_chord_7 {
-		res[i] = scale[pos]
-	}
-	return res
-}
-
-StringInstrumentLayout :: []NoteKind
+// StringInstrumentLayout :: []NoteKind
 
 
 main :: proc() {
-
 	for note in NoteKind {
 		major_scale := scale_for_note_kind(note, major_scale_steps)
 		fmt.println(note, major_scale)
@@ -85,10 +77,10 @@ main :: proc() {
 		minor_scale := scale_for_note_kind(note, minor_scale_steps)
 		fmt.println(note, minor_scale)
 
-		fmt.println(note, make_major_chord(major_scale))
-		fmt.println(note, make_major_chord_7(major_scale))
-		fmt.println(note, make_major_chord(minor_scale))
-		fmt.println(note, make_major_chord_7(minor_scale))
+		fmt.println(note, make_chord(major_scale, major_chord))
+		fmt.println(note, make_chord(major_scale, major_chord_7))
+		fmt.println(note, make_chord(minor_scale, major_chord))
+		fmt.println(note, make_chord(minor_scale, major_chord_7))
 		fmt.println()
 	}
 
