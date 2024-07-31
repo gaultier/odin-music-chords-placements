@@ -18,26 +18,26 @@ NoteKind :: enum {
 	G_Sharp,
 }
 
-Note :: struct {
-	kind:  NoteKind,
-	level: u8,
-}
-
+// Note :: struct {
+// 	kind:  NoteKind,
+// 	level: u8,
+// }
 
 Step :: enum {
 	Half  = 1,
 	Whole = 2,
 }
 
-Scale :: [7]Step
+ScaleKind :: [7]Step
 
+Scale :: [7]NoteKind
 
 next_note_kind :: proc(note_kind: NoteKind, step: Step) -> NoteKind {
 	return cast(NoteKind)((cast(u8)note_kind + cast(u8)step) % 12)
 }
 
-scale_for_note_kind :: proc(note_kind: NoteKind, scale: Scale) -> [7]NoteKind {
-	res := [7]NoteKind{}
+scale_for_note_kind :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
+	res := Scale{}
 	res[0] = note_kind
 
 	for i := 1; i < len(res); i += 1 {
@@ -50,8 +50,8 @@ scale_for_note_kind :: proc(note_kind: NoteKind, scale: Scale) -> [7]NoteKind {
 }
 
 main :: proc() {
-	major_scale := Scale{.Whole, .Whole, .Half, .Whole, .Whole, .Whole, .Half}
-	minor_scale := Scale{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Whole}
+	major_scale := ScaleKind{.Whole, .Whole, .Half, .Whole, .Whole, .Whole, .Half}
+	minor_scale := ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Whole}
 
 	for note in NoteKind {
 		fmt.println(note, scale_for_note_kind(note, major_scale))
