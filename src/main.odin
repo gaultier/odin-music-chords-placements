@@ -29,8 +29,8 @@ Step :: enum {
 }
 
 ScaleKind :: [7]Step
-major_scale :: ScaleKind{.Whole, .Whole, .Half, .Whole, .Whole, .Whole, .Half}
-minor_scale :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Whole}
+major_scale_steps :: ScaleKind{.Whole, .Whole, .Half, .Whole, .Whole, .Whole, .Half}
+minor_scale_steps :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Whole}
 
 Scale :: [7]NoteKind
 
@@ -53,13 +53,21 @@ scale_for_note_kind :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
 
 Chord :: []u8
 major_chord :: Chord{0, 2, 4}
+major_chord_7 :: Chord{0, 2, 4, 6}
 
-make_major_chord :: proc(note_kind: NoteKind) -> [3]NoteKind {
-	scale := scale_for_note_kind(note_kind, major_scale)
-
+make_major_chord :: proc(scale: Scale) -> [3]NoteKind {
 	res := [3]NoteKind{}
 
 	for pos, i in major_chord {
+		res[i] = scale[pos]
+	}
+	return res
+}
+
+make_major_chord_7 :: proc(scale: Scale) -> [4]NoteKind {
+	res := [4]NoteKind{}
+
+	for pos, i in major_chord_7 {
 		res[i] = scale[pos]
 	}
 	return res
@@ -71,9 +79,16 @@ StringInstrumentLayout :: []NoteKind
 main :: proc() {
 
 	for note in NoteKind {
-		fmt.println(note, scale_for_note_kind(note, major_scale))
-		fmt.println(note, scale_for_note_kind(note, minor_scale))
-		fmt.println(note, make_major_chord(note))
+		major_scale := scale_for_note_kind(note, major_scale_steps)
+		fmt.println(note, major_scale)
+
+		minor_scale := scale_for_note_kind(note, minor_scale_steps)
+		fmt.println(note, minor_scale)
+
+		fmt.println(note, make_major_chord(major_scale))
+		fmt.println(note, make_major_chord_7(major_scale))
+		fmt.println(note, make_major_chord(minor_scale))
+		fmt.println(note, make_major_chord_7(minor_scale))
 		fmt.println()
 	}
 
