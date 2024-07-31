@@ -53,6 +53,8 @@ main :: proc() {
 	major_scale := Scale{.Whole, .Whole, .Half, .Whole, .Whole, .Whole, .Half}
 	minor_scale := Scale{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Whole}
 
-	fmt.println(scale_for_note_kind(.C, major_scale))
-	fmt.println(scale_for_note_kind(.C, minor_scale))
+	for note in NoteKind {
+		fmt.println(note, scale_for_note_kind(note, major_scale))
+		fmt.println(note, scale_for_note_kind(note, minor_scale))
+	}
 }
