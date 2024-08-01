@@ -1,5 +1,6 @@
 package main
 
+import "core:container/small_array"
 import "core:fmt"
 
 
@@ -52,21 +53,21 @@ scale_for_note_kind :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
 }
 
 ChordKind :: []u8
-major_chord :: ChordKind{0, 2, 4}
-major_chord_7 :: ChordKind{0, 2, 4, 6}
+major_chord :: ChordKind{1, 3, 5}
+major_chord_7 :: ChordKind{1, 3, 5, 7}
 
-Chord :: []NoteKind
+Chord :: small_array.Small_Array(10, NoteKind)
 
 make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
-	res := make([]NoteKind, len(chord_kind))
+	res := Chord{}
 
-	for pos, i in major_chord {
-		res[i] = scale[pos]
+	for pos in major_chord {
+		small_array.push(&res, scale[pos - 1])
 	}
 	return res
 }
 
-// StringInstrumentLayout :: []NoteKind
+StringInstrumentLayout :: []NoteKind
 
 
 main :: proc() {
