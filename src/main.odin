@@ -88,7 +88,7 @@ find_fret_for_note_on_string :: proc(
 	bool,
 ) {
 	for i := max(starting_fret, string_layout.first_fret); i < string_layout.last_fret; i += 1 {
-		current_note := note_add(string_layout.first_note, i)
+		current_note := note_add(string_layout.first_note, i - string_layout.first_fret)
 		if current_note == note_kind {
 			return i, true
 		}
@@ -120,5 +120,6 @@ main :: proc() {
 		{first_note = .D, first_fret = 0, last_fret = 12},
 	}
 
-	fmt.println(find_fret_for_note_on_string(.B, 2, banjo_layout[1]))
+	fmt.println(find_fret_for_note_on_string(.F, 2, banjo_layout[1]))
+	fmt.println(find_fret_for_note_on_string(.A_Sharp, 0, banjo_layout[0]))
 }
