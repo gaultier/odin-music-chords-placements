@@ -96,6 +96,31 @@ find_fret_for_note_on_string :: proc(
 	return 0, false
 }
 
+find_frets_for_chord :: proc(
+	chord: []NoteKind,
+	instrument_layout: StringInstrumentLayout,
+) -> (
+	small_array.Small_Array(10, u8),
+	bool,
+) {
+	res := small_array.Small_Array(10, u8){}
+	current_string := 0
+
+	for note in chord {
+		fret, ok := find_fret_for_note_on_string(note, 0, instrument_layout[current_string])
+		if ok {
+			small_array.push(&res, fret)
+			current_string += 1
+			if current_string >= len(instrument_layout) {
+				return {}, false
+			}
+		}
+	}
+	assert(res.len == len(chord))
+
+	return res, true
+}
+
 main :: proc() {
 	for note in NoteKind {
 		major_scale := scale_for_note_kind(note, major_scale_steps)
@@ -113,7 +138,7 @@ main :: proc() {
 
 
 	banjo_layout := StringInstrumentLayout {
-		{first_note = .G, first_fret = 4, last_fret = 17},
+		// {first_note = .G, first_fret = 4, last_fret = 17},
 		{first_note = .D, first_fret = 0, last_fret = 12},
 		{first_note = .G, first_fret = 0, last_fret = 12},
 		{first_note = .B, first_fret = 0, last_fret = 12},
@@ -122,4 +147,10 @@ main :: proc() {
 
 	fmt.println(find_fret_for_note_on_string(.F, 2, banjo_layout[1]))
 	fmt.println(find_fret_for_note_on_string(.A_Sharp, 0, banjo_layout[0]))
+
+	major_scale := scale_for_note_kind(.C, major_scale_steps)
+	c_major_chord := make_chord(major_scale, major_chord)
+	c_major_chord_slice := small_array.slice(&c_major_chord)
+	c_major_chord_frets, ok := find_frets_for_chord(c_major_chord_slice, banjo_layout)
+	fmt.println(ok, small_array.slice(&c_major_chord_frets))
 }
