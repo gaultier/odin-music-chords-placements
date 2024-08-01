@@ -35,8 +35,12 @@ minor_scale_steps :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Wh
 
 Scale :: [7]NoteKind
 
+note_add :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
+	return cast(NoteKind)((cast(u8)note_kind + cast(u8)offset) % 12)
+}
+
 next_note_kind :: proc(note_kind: NoteKind, step: Step) -> NoteKind {
-	return cast(NoteKind)((cast(u8)note_kind + cast(u8)step) % 12)
+	return note_add(note_kind, cast(u8)step)
 }
 
 scale_for_note_kind :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
@@ -67,8 +71,30 @@ make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 	return res
 }
 
-StringInstrumentLayout :: []NoteKind
+StringLayout :: struct {
+	first_note: NoteKind,
+	first_fret: u8,
+	last_fret:  u8,
+}
 
+StringInstrumentLayout :: []StringLayout
+
+find_fret_for_note_on_string :: proc(
+	note_kind: NoteKind,
+	starting_fret: u8,
+	string_layout: StringLayout,
+) -> (
+	u8,
+	bool,
+) {
+	for i := max(starting_fret, string_layout.first_fret); i < string_layout.last_fret; i += 1 {
+		current_note := note_add(string_layout.first_note, i)
+		if current_note == note_kind {
+			return i, true
+		}
+	}
+	return 0, false
+}
 
 main :: proc() {
 	for note in NoteKind {
@@ -86,5 +112,13 @@ main :: proc() {
 	}
 
 
-	// banjo_layout := StringInstrumentLayout{.D, .G, .B, .D}
+	banjo_layout := StringInstrumentLayout {
+		{first_note = .G, first_fret = 4, last_fret = 17},
+		{first_note = .D, first_fret = 0, last_fret = 12},
+		{first_note = .G, first_fret = 0, last_fret = 12},
+		{first_note = .B, first_fret = 0, last_fret = 12},
+		{first_note = .D, first_fret = 0, last_fret = 12},
+	}
+
+	fmt.println(find_fret_for_note_on_string(.B, 2, banjo_layout[1]))
 }
