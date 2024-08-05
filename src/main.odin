@@ -2,6 +2,7 @@ package main
 
 import "core:container/small_array"
 import "core:fmt"
+import "core:math"
 
 
 NoteKind :: enum {
@@ -99,21 +100,38 @@ find_fret_for_note_on_string :: proc(
 find_frets_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
+	starting_fret: u8,
 ) -> (
-	small_array.Small_Array(10, u8),
+	small_array.Small_Array(10, i8),
 	bool,
 ) {
-	res := small_array.Small_Array(10, u8){}
+	max_fret_distance :: 5
+
+	res := small_array.Small_Array(10, i8){}
 	current_string := 0
 
 	for note in chord {
-		fret, ok := find_fret_for_note_on_string(note, 0, instrument_layout[current_string])
-		if ok {
-			small_array.push(&res, fret)
+		fret, ok := find_fret_for_note_on_string(
+			note,
+			starting_fret,
+			instrument_layout[current_string],
+		)
+		if ok &&
+		   current_string > 0 &&
+		   res.data[res.len - 1] >= 0 &&
+		   math.abs(fret - u8(res.data[res.len - 1])) > max_fret_distance {
+
+			// Mute the string.
+			small_array.push(&res, -1)
 			current_string += 1
-			if current_string >= len(instrument_layout) {
-				return {}, false
-			}
+
+		} else if ok {
+			small_array.push(&res, i8(fret))
+			current_string += 1
+		}
+
+		if current_string >= len(instrument_layout) {
+			return {}, false
 		}
 	}
 	assert(res.len == len(chord))
@@ -151,6 +169,6 @@ main :: proc() {
 	major_scale := scale_for_note_kind(.C, major_scale_steps)
 	c_major_chord := make_chord(major_scale, major_chord)
 	c_major_chord_slice := small_array.slice(&c_major_chord)
-	c_major_chord_frets, ok := find_frets_for_chord(c_major_chord_slice, banjo_layout)
+	c_major_chord_frets, ok := find_frets_for_chord(c_major_chord_slice, banjo_layout, 0)
 	fmt.println(ok, small_array.slice(&c_major_chord_frets))
 }
