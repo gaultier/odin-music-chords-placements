@@ -6,7 +6,7 @@ import "core:math"
 
 
 NoteKind :: enum {
-	A = 0,
+	A,
 	A_Sharp,
 	B,
 	C,
@@ -19,6 +19,7 @@ NoteKind :: enum {
 	G,
 	G_Sharp,
 }
+#assert(cast(u8)NoteKind.G_Sharp==11)
 
 // Note :: struct {
 // 	kind:  NoteKind,
@@ -37,7 +38,7 @@ minor_scale_steps :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Wh
 Scale :: [7]NoteKind
 
 note_add :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
-	return cast(NoteKind)((cast(u8)note_kind + cast(u8)offset) % 12)
+	return cast(NoteKind)((cast(u8)note_kind + offset) % 12)
 }
 
 next_note_kind :: proc(note_kind: NoteKind, step: Step) -> NoteKind {
