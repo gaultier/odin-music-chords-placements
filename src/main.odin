@@ -19,7 +19,7 @@ NoteKind :: enum {
 	G,
 	G_Sharp,
 }
-#assert(cast(u8)NoteKind.G_Sharp==11)
+#assert(cast(u8)NoteKind.G_Sharp == 11)
 
 // Note :: struct {
 // 	kind:  NoteKind,
