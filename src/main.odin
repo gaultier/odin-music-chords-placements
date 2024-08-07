@@ -98,6 +98,10 @@ find_fret_for_note_on_string :: proc(
 	return 0, false
 }
 
+// Rules:
+// - Each string is either muted, open, or picked by one finger and produces 0 (muted) or 1 (otherwise) note .
+// - The maximum distance between all picked frets is 4 or 5 due to the physical length of fingers.
+// - Every fret of every string gets considered
 find_frets_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
