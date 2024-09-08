@@ -230,11 +230,32 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 		{first_note = .B, first_fret = 0, last_fret = 12},
 		{first_note = .D, first_fret = 0, last_fret = 12},
 	}
-	major_scale := scale_for_note_kind(.C, major_scale_steps)
-	c_major_chord := make_chord(major_scale, major_chord)
-	c_major_chord_slice := small_array.slice(&c_major_chord)
 
-	assert(
-		true == is_fingering_for_chord_valid(c_major_chord_slice, banjo_layout, []u8{2, 0, 1, 2}),
-	)
+	{
+		c_major_scale := scale_for_note_kind(.C, major_scale_steps)
+		c_major_chord := make_chord(c_major_scale, major_chord)
+
+		assert(
+			true ==
+			is_fingering_for_chord_valid(
+				small_array.slice(&c_major_chord),
+				banjo_layout,
+				[]u8{2, 0, 1, 2},
+			),
+		)
+	}
+
+
+	{
+		g_major_scale := scale_for_note_kind(.G, major_scale_steps)
+		g_major_chord := make_chord(g_major_scale, major_chord)
+		assert(
+			true ==
+			is_fingering_for_chord_valid(
+				small_array.slice(&g_major_chord),
+				banjo_layout,
+				[]u8{0, 0, 0, 0},
+			),
+		)
+	}
 }
