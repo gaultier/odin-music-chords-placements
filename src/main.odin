@@ -113,8 +113,8 @@ is_fingering_for_chord_valid :: proc(
 
 	// Check that the distance between the first and last finger is <= max_finger_distance.
 	{
-		finger_start := fingering[0]
-		finger_end := fingering[len(fingering) - 1]
+		finger_start := slice.min(fingering)
+		finger_end := slice.max(fingering)
 		dist_squared := (finger_start - finger_end) * (finger_start - finger_end)
 
 		if dist_squared >= max_finger_distance * max_finger_distance {
@@ -224,7 +224,7 @@ main :: proc() {
 @(test)
 test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 	banjo_layout := StringInstrumentLayout {
-		// {first_note = .G, first_fret = 4, last_fret = 17},
+		{first_note = .G, first_fret = 4, last_fret = 17},
 		{first_note = .D, first_fret = 0, last_fret = 12},
 		{first_note = .G, first_fret = 0, last_fret = 12},
 		{first_note = .B, first_fret = 0, last_fret = 12},
@@ -240,7 +240,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			is_fingering_for_chord_valid(
 				small_array.slice(&c_major_chord),
 				banjo_layout,
-				[]u8{2, 0, 1, 2},
+				[]u8{0, 2, 0, 1, 2},
 			),
 		)
 	}
@@ -254,7 +254,32 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			is_fingering_for_chord_valid(
 				small_array.slice(&g_major_chord),
 				banjo_layout,
-				[]u8{0, 0, 0, 0},
+				[]u8{0, 0, 0, 0, 0},
+			),
+		)
+	}
+}
+
+@(test)
+test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
+	banjo_layout := StringInstrumentLayout {
+		{first_note = .G, first_fret = 4, last_fret = 17},
+		{first_note = .D, first_fret = 0, last_fret = 12},
+		{first_note = .G, first_fret = 0, last_fret = 12},
+		{first_note = .B, first_fret = 0, last_fret = 12},
+		{first_note = .D, first_fret = 0, last_fret = 12},
+	}
+
+	{
+		c_major_scale := scale_for_note_kind(.C, major_scale_steps)
+		c_major_chord := make_chord(c_major_scale, major_chord)
+
+		assert(
+			false ==
+			is_fingering_for_chord_valid(
+				small_array.slice(&c_major_chord),
+				banjo_layout,
+				[]u8{0, 2, 12, 1, 2},
 			),
 		)
 	}
