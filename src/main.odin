@@ -3,6 +3,8 @@ package main
 import "core:container/small_array"
 import "core:fmt"
 import "core:math"
+import "core:slice"
+import "core:testing"
 
 
 NoteKind :: enum {
@@ -30,6 +32,7 @@ Step :: enum {
 	Half  = 1,
 	Whole = 2,
 }
+
 
 ScaleKind :: [7]Step
 major_scale_steps :: ScaleKind{.Whole, .Whole, .Half, .Whole, .Whole, .Whole, .Half}
@@ -101,10 +104,41 @@ find_fret_for_note_on_string :: proc(
 is_fingering_for_chord_valid :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
-	fingering: small_array.Small_Array(10, i8),
+	// This array has as many entries as the instrument has strings.
+	// `fingering[a] = b` means: the string `a` is picked on fret `b`, or if `b == 0`, the string `a` is open.
+	fingering: []u8,
 ) -> bool {
-	// TODO
-	return false
+	max_finger_distance :: 5
+	assert(len(fingering) == len(instrument_layout))
+
+	// Check that the distance between the first and last finger is <= max_finger_distance.
+	{
+		finger_start := fingering[0]
+		finger_end := fingering[len(fingering) - 1]
+		dist_squared := (finger_start - finger_end) * (finger_start - finger_end)
+
+		if dist_squared >= max_finger_distance * max_finger_distance {
+			return false
+		}
+	}
+
+	// Check that the fingering abides by the chord.
+	{
+		for finger, string_i in fingering {
+			string_layout := instrument_layout[string_i]
+			note := string_layout.first_note
+			if finger > 0 {
+				note = note_add(string_layout.first_note, finger - string_layout.first_fret)
+			}
+
+			if !slice.contains(chord, note) {
+				return false
+			}
+		}
+	}
+
+
+	return true
 }
 
 // Rules:
@@ -116,12 +150,12 @@ find_frets_for_chord :: proc(
 	instrument_layout: StringInstrumentLayout,
 	starting_fret: u8,
 ) -> (
-	small_array.Small_Array(10, i8),
+	small_array.Small_Array(10, u8),
 	bool,
 ) {
 	max_fret_distance :: 5
 
-	res := small_array.Small_Array(10, i8){}
+	res := small_array.Small_Array(10, u8){}
 	current_string := 0
 
 	for note in chord {
@@ -136,11 +170,11 @@ find_frets_for_chord :: proc(
 		   math.abs(fret - u8(res.data[res.len - 1])) > max_fret_distance {
 
 			// Mute the string.
-			small_array.push(&res, -1)
+			small_array.push(&res, 0)
 			current_string += 1
 
 		} else if ok {
-			small_array.push(&res, i8(fret))
+			small_array.push(&res, u8(fret))
 			current_string += 1
 		}
 
@@ -185,4 +219,22 @@ main :: proc() {
 	c_major_chord_slice := small_array.slice(&c_major_chord)
 	c_major_chord_frets, ok := find_frets_for_chord(c_major_chord_slice, banjo_layout, 0)
 	fmt.println(ok, small_array.slice(&c_major_chord_frets))
+}
+
+@(test)
+test_valid_fingering_for_chord :: proc(_: ^testing.T) {
+	banjo_layout := StringInstrumentLayout {
+		// {first_note = .G, first_fret = 4, last_fret = 17},
+		{first_note = .D, first_fret = 0, last_fret = 12},
+		{first_note = .G, first_fret = 0, last_fret = 12},
+		{first_note = .B, first_fret = 0, last_fret = 12},
+		{first_note = .D, first_fret = 0, last_fret = 12},
+	}
+	major_scale := scale_for_note_kind(.C, major_scale_steps)
+	c_major_chord := make_chord(major_scale, major_chord)
+	c_major_chord_slice := small_array.slice(&c_major_chord)
+
+	assert(
+		true == is_fingering_for_chord_valid(c_major_chord_slice, banjo_layout, []u8{2, 0, 1, 2}),
+	)
 }
