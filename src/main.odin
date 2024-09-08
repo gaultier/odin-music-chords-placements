@@ -243,6 +243,15 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 				[]u8{0, 2, 0, 1, 2},
 			),
 		)
+		// That's a C5 !
+		assert(
+			false ==
+			is_fingering_for_chord_valid(
+				small_array.slice(&c_major_chord),
+				banjo_layout,
+				[]u8{0, 2, 2, 1, 2},
+			),
+		)
 	}
 
 
