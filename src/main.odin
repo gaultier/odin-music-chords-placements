@@ -141,6 +141,24 @@ is_fingering_for_chord_valid :: proc(
 	return true
 }
 
+next_fingering :: proc(fingering: ^[]u8, instrumentLayout: StringInstrumentLayout) {
+	assert(len(fingering) > 0)
+
+	#reverse for &finger, string_i in fingering {
+		string_layout := instrumentLayout[string_i]
+
+		if finger == string_layout.last_fret {
+			finger = string_layout.first_fret
+
+			// Reset all right-hand fingers.
+			for i := string_i + 1; i < len(fingering); i += 1 {
+				string_layout := instrumentLayout[string_i]
+				fingering[i] = string_layout.first_fret
+			}
+		}
+	}
+}
+
 // Rules:
 // - Each string is either muted, open, or picked by one finger and produces 0 (muted) or 1 (otherwise) note .
 // - The maximum distance between all picked frets is 4 or 5 due to the physical length of fingers.
