@@ -149,42 +149,31 @@ find_frets_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
 	starting_fret: u8,
-) -> (
-	small_array.Small_Array(10, u8),
-	bool,
-) {
-	max_fret_distance :: 5
+) -> [][]u8 {
 
-	res := small_array.Small_Array(10, u8){}
+	res: [dynamic][]u8
+	fingering := small_array.Small_Array(10, u8){}
 	current_string := 0
 
-	for note in chord {
-		fret, ok := find_fret_for_note_on_string(
-			note,
-			starting_fret,
-			instrument_layout[current_string],
-		)
-		if ok &&
-		   current_string > 0 &&
-		   res.data[res.len - 1] >= 0 &&
-		   math.abs(fret - u8(res.data[res.len - 1])) > max_fret_distance {
+	for string_layout, string_i in instrument_layout {
+		for fret := string_layout.first_fret; fret < string_layout.last_fret; fret += 1 {
+			if is_fingering_for_chord_valid(
+				chord,
+				instrument_layout,
+				small_array.slice(&fingering),
+			) {
+				clone, err := slice.clone(small_array.slice(&fingering))
+				if err != nil {
+					panic("clone failed")
+				}
 
-			// Mute the string.
-			small_array.push(&res, 0)
-			current_string += 1
-
-		} else if ok {
-			small_array.push(&res, u8(fret))
-			current_string += 1
-		}
-
-		if current_string >= len(instrument_layout) {
-			return {}, false
+				append(&res, clone)
+			}
 		}
 	}
-	assert(res.len == len(chord))
 
-	return res, true
+
+	return res[:]
 }
 
 main :: proc() {
