@@ -275,9 +275,6 @@ test_compute_scale :: proc(_: ^testing.T) {
 
 	minor_scale := compute_scale(.A, minor_scale_steps)
 	assert(minor_scale == [7]NoteKind{.A, .B, .C, .D, .E, .F, .G})
-	a := compute_scale(.C, major_scale_steps)
-	b := compute_scale(.A, minor_scale_steps)
-	assert(a == b)
 }
 
 @(test)
