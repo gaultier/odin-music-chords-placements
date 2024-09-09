@@ -135,7 +135,7 @@ fingering_min_max :: proc(fingering: []StringState) -> (u8, u8, bool) {
 }
 
 
-is_fingering_for_chord_valid :: proc(
+is_fingering_valid_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
 	// This array has as many entries as the instrument has strings.
@@ -243,7 +243,7 @@ find_all_fingerings_for_chord :: proc(
 	fingering_slice := small_array.slice(&fingering)
 
 	for next_fingering(&fingering_slice, instrument_layout) {
-		if !is_fingering_for_chord_valid(
+		if !is_fingering_valid_for_chord(
 			chord,
 			instrument_layout,
 			small_array.slice(&fingering),
@@ -384,7 +384,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 
 		assert(
 			true ==
-			is_fingering_for_chord_valid(
+			is_fingering_valid_for_chord(
 				small_array.slice(&c_major_chord),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{StringStateOpen{}, 2, StringStateOpen{}, 1, 2},
@@ -393,7 +393,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 		// That's a C5 !
 		assert(
 			false ==
-			is_fingering_for_chord_valid(
+			is_fingering_valid_for_chord(
 				small_array.slice(&c_major_chord),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{StringStateOpen{}, 2, 2, 1, 2},
@@ -407,7 +407,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 		g_major_chord := make_chord(g_major_scale, major_chord)
 		assert(
 			true ==
-			is_fingering_for_chord_valid(
+			is_fingering_valid_for_chord(
 				small_array.slice(&g_major_chord),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState {
@@ -430,7 +430,7 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 
 		assert(
 			false ==
-			is_fingering_for_chord_valid(
+			is_fingering_valid_for_chord(
 				small_array.slice(&c_major_chord),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{StringStateOpen{}, 2, 12, 1, 2},
