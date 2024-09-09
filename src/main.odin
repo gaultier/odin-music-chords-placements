@@ -141,22 +141,31 @@ is_fingering_for_chord_valid :: proc(
 	return true
 }
 
-next_fingering :: proc(fingering: ^[]u8, instrumentLayout: StringInstrumentLayout) {
+next_fingering :: proc(fingering: ^[]u8, instrumentLayout: StringInstrumentLayout) -> bool {
 	assert(len(fingering) > 0)
+	assert(len(fingering) == len(instrumentLayout))
 
 	#reverse for &finger, string_i in fingering {
 		string_layout := instrumentLayout[string_i]
 
-		if finger == string_layout.last_fret {
-			finger = string_layout.first_fret
-
-			// Reset all right-hand fingers.
-			for i := string_i + 1; i < len(fingering); i += 1 {
-				string_layout := instrumentLayout[string_i]
-				fingering[i] = string_layout.first_fret
-			}
+		// Easy case, just increment the slot and return.
+		// E.g.: `0 | 0 | [3]` -> `0 | 0 | [4]`
+		// E.g.: `0 | [1] | 0` -> `0 | [2] | 0`
+		if finger < string_layout.last_fret {
+			finger += 1
+			return true
 		}
+
+		// The slot has reached the maximum value, need to reset it to its initial value 
+		// and then inspect the left-hand part to increment it.
+		// E.g.: `0 | 0 | [255]` -> `0 | [0] | 0`
+		// E.g.: `0 | [255] | 0` -> `[0] | 0 | 0`
+		finger = string_layout.first_fret
+
 	}
+
+	// Reached the end.
+	return false
 }
 
 // Rules:
@@ -224,8 +233,8 @@ main :: proc() {
 	major_scale := scale_for_note_kind(.C, major_scale_steps)
 	c_major_chord := make_chord(major_scale, major_chord)
 	c_major_chord_slice := small_array.slice(&c_major_chord)
-	c_major_chord_frets, ok := find_frets_for_chord(c_major_chord_slice, banjo_layout, 0)
-	fmt.println(ok, small_array.slice(&c_major_chord_frets))
+	c_major_chord_frets := find_frets_for_chord(c_major_chord_slice, banjo_layout, 0)
+	fmt.println(c_major_chord_frets)
 }
 
 @(test)
@@ -299,4 +308,18 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 			),
 		)
 	}
+}
+
+@(test)
+test_next_fingering :: proc(_: ^testing.T) {
+	banjo_layout := StringInstrumentLayout {
+		{first_note = .G, first_fret = 4, last_fret = 17},
+		{first_note = .D, first_fret = 0, last_fret = 12},
+		{first_note = .G, first_fret = 0, last_fret = 12},
+		{first_note = .B, first_fret = 0, last_fret = 12},
+		{first_note = .D, first_fret = 0, last_fret = 12},
+	}
+	fingering := []u8{0, 0, 0, 0, 0}
+
+	assert(true == next_fingering(&fingering, banjo_layout))
 }
