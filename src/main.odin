@@ -227,10 +227,9 @@ next_fingering :: proc(
 // - The maximum distance between all picked frets is 4 or 5 due to the physical length of fingers.
 // - Every fret of every string gets considered
 // TODO: muted strings.
-find_fingerings_for_chord :: proc(
+find_all_fingerings_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
-	starting_fret: u8,
 ) -> [][]StringState {
 
 	res: [dynamic][]StringState
@@ -280,10 +279,9 @@ main :: proc() {
 		c_major_scale := make_scale(.C, major_scale_steps)
 		c_major_chord := make_chord(c_major_scale, major_chord)
 		c_major_chord_slice := small_array.slice(&c_major_chord)
-		c_major_chord_fingerings := find_fingerings_for_chord(
+		c_major_chord_fingerings := find_all_fingerings_for_chord(
 			c_major_chord_slice,
 			BANJO_LAYOUT_STANDARD_5_STRINGS,
-			0,
 		)
 		defer delete(c_major_chord_fingerings)
 
@@ -292,7 +290,11 @@ main :: proc() {
 			for finger, i in fingering {
 				string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[i]
 				note, ok := make_note_for_string_state(finger, string_layout)
-				fmt.print(finger, note, ok, ", ")
+				if ok {
+					fmt.print(finger, note, " | ")
+				} else {
+					fmt.print("x  | ")
+				}
 			}
 		}
 	}
@@ -301,10 +303,9 @@ main :: proc() {
 		g_major_scale := make_scale(.G, major_scale_steps)
 		g_major_chord := make_chord(g_major_scale, major_chord)
 		g_major_chord_slice := small_array.slice(&g_major_chord)
-		g_major_chord_fingerings := find_fingerings_for_chord(
+		g_major_chord_fingerings := find_all_fingerings_for_chord(
 			g_major_chord_slice,
 			GUITAR_LAYOUT_STANDARD_6_STRING,
-			0,
 		)
 		defer delete(g_major_chord_fingerings)
 
