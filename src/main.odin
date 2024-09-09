@@ -81,7 +81,7 @@ Chord :: small_array.Small_Array(10, NoteKind)
 make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 	res := Chord{}
 
-	for pos in major_chord {
+	for pos in chord_kind {
 		small_array.push(&res, scale[pos - 1])
 	}
 	return res
@@ -287,10 +287,10 @@ test_make_chord :: proc(_: ^testing.T) {
 
 
 	d_major_scale := make_scale(.D, major_scale_steps)
-	d_major_chord := make_chord(d_major_scale, major_chord)
-	d_major_chord_slice := small_array.slice(&d_major_chord)
+	d_major_7_chord := make_chord(d_major_scale, major_chord_7)
+	d_major_7_chord_slice := small_array.slice(&d_major_7_chord)
 
-	assert(slice.equal(d_major_chord_slice, []NoteKind{.D, .F_Sharp, .A}))
+	assert(slice.equal(d_major_7_chord_slice, []NoteKind{.D, .F_Sharp, .A, .C_Sharp}))
 }
 
 @(test)
