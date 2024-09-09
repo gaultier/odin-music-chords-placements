@@ -141,26 +141,34 @@ is_fingering_for_chord_valid :: proc(
 	return true
 }
 
+// Returns: true if we (safely) overflowed, false otherwise.
+increment_fret :: proc(fret: ^u8, string_layout: StringLayout) -> bool {
+	switch fret^ {
+	case 0:
+		fret^ = string_layout.first_fret
+		return false
+	case string_layout.last_fret:
+		fret^ = 0
+		return true
+
+	case:
+		fret^ += 1
+		return false
+	}
+}
+
 next_fingering :: proc(fingering: ^[]u8, instrumentLayout: StringInstrumentLayout) -> bool {
 	assert(len(fingering) > 0)
 	assert(len(fingering) == len(instrumentLayout))
 
-	#reverse for &finger, string_i in fingering {
+	#reverse for _, string_i in fingering {
 		string_layout := instrumentLayout[string_i]
 
-		// Easy case, just increment the slot and return.
-		// E.g.: `0 | 0 | [3]` -> `0 | 0 | [4]`
-		// E.g.: `0 | [1] | 0` -> `0 | [2] | 0`
-		if finger < string_layout.last_fret {
-			finger += 1
-			return true
-		}
+		overflowed := increment_fret(&fingering[string_i], string_layout)
 
-		// The slot has reached the maximum value, need to reset it to its initial value 
-		// and then inspect the left-hand part to increment it.
-		// E.g.: `0 | 0 | [255]` -> `0 | [0] | 0`
-		// E.g.: `0 | [255] | 0` -> `[0] | 0 | 0`
-		finger = string_layout.first_fret
+		if !overflowed {return true}
+
+		// The slot has reached the maximum value, need to inspect the left-hand part to increment it.
 	}
 
 	// Reached the end.
@@ -313,10 +321,10 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 test_next_fingering :: proc(_: ^testing.T) {
 	banjo_layout := StringInstrumentLayout {
 		{first_note = .G, first_fret = 4, last_fret = 17},
-		{first_note = .D, first_fret = 0, last_fret = 12},
-		{first_note = .G, first_fret = 0, last_fret = 12},
-		{first_note = .B, first_fret = 0, last_fret = 12},
-		{first_note = .D, first_fret = 0, last_fret = 12},
+		{first_note = .D, first_fret = 1, last_fret = 12},
+		{first_note = .G, first_fret = 1, last_fret = 12},
+		{first_note = .B, first_fret = 1, last_fret = 12},
+		{first_note = .D, first_fret = 1, last_fret = 12},
 	}
 	fingering := []u8{0, 0, 0, 0, 0}
 
