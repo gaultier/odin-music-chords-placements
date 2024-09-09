@@ -41,7 +41,7 @@ minor_scale_steps :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Wh
 Scale :: [7]NoteKind
 
 
-BANJO_LAYOUT :: StringInstrumentLayout {
+BANJO_LAYOUT := StringInstrumentLayout {
 	{open_note = .G, first_fret = 4, last_fret = 17},
 	{open_note = .D, first_fret = 1, last_fret = 12},
 	{open_note = .G, first_fret = 1, last_fret = 12},
@@ -209,22 +209,21 @@ find_frets_for_chord :: proc(
 
 	res: [dynamic][]u8
 	fingering := small_array.Small_Array(10, u8){}
-	current_string := 0
+	for _ in instrument_layout {
+		small_array.append(&fingering, 0)
+	}
+	assert(len(instrument_layout) == small_array.len(fingering))
+	fingering_slice := small_array.slice(&fingering)
 
-	for string_layout, string_i in instrument_layout {
-		for fret := string_layout.first_fret; fret < string_layout.last_fret; fret += 1 {
-			if is_fingering_for_chord_valid(
-				chord,
-				instrument_layout,
-				small_array.slice(&fingering),
-			) {
-				clone, err := slice.clone(small_array.slice(&fingering))
-				if err != nil {
-					panic("clone failed")
-				}
 
-				append(&res, clone)
+	for next_fingering(&fingering_slice, BANJO_LAYOUT) {
+		if is_fingering_for_chord_valid(chord, instrument_layout, small_array.slice(&fingering)) {
+			clone, err := slice.clone(small_array.slice(&fingering))
+			if err != nil {
+				panic("clone failed")
 			}
+
+			append(&res, clone)
 		}
 	}
 
@@ -255,8 +254,16 @@ main :: proc() {
 	major_scale := scale_for_note_kind(.C, major_scale_steps)
 	c_major_chord := make_chord(major_scale, major_chord)
 	c_major_chord_slice := small_array.slice(&c_major_chord)
-	c_major_chord_frets := find_frets_for_chord(c_major_chord_slice, BANJO_LAYOUT, 0)
-	fmt.println(c_major_chord_frets)
+	c_major_chord_fingerings := find_frets_for_chord(c_major_chord_slice, BANJO_LAYOUT, 0)
+
+	for fingering in c_major_chord_fingerings {
+		fmt.print("\n---fingering: ")
+		for finger, i in fingering {
+			string_layout := BANJO_LAYOUT[i]
+			note := note_add(string_layout.open_note, finger)
+			fmt.print(finger, note, ", ")
+		}
+	}
 }
 
 @(test)
