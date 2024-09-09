@@ -172,22 +172,22 @@ is_fingering_for_chord_valid :: proc(
 }
 
 // Returns: true if we reach the terminal state, false otherwise.
-increment_string_state :: proc(fret: ^StringState, string_layout: StringLayout) -> bool {
-	switch v in fret^ {
+increment_string_state :: proc(string_state: ^StringState, string_layout: StringLayout) -> bool {
+	switch v in string_state^ {
 	case StringStateMuted:
-		fret^ = StringStateOpen{}
+		string_state^ = StringStateOpen{}
 		return false
 
 	case StringStateOpen:
-		fret^ = string_layout.first_fret
+		string_state^ = string_layout.first_fret
 		return false
 
 	case u8:
 		if v == string_layout.last_fret {
-			fret^ = StringStateMuted{}
+			string_state^ = StringStateMuted{}
 			return true
 		} else {
-			fret^ = v + 1
+			string_state^ = v + 1
 			return false
 		}
 	}
@@ -447,33 +447,34 @@ test_next_fingering :: proc(_: ^testing.T) {
 		12,
 	}
 	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
-	assert(
-		slice.equal(
-			[]StringState {
-				StringStateOpen{},
-				StringStateOpen{},
-				StringStateOpen{},
-				1,
-				StringStateOpen{},
-			},
-			fingering,
-		),
-	)
+	v: u8
+	ok: bool
+	_, ok = fingering[0].(StringStateOpen)
+	assert(ok)
+	_, ok = fingering[1].(StringStateOpen)
+	assert(ok)
+	_, ok = fingering[2].(StringStateOpen)
+	assert(ok)
+	v, ok = fingering[3].(u8)
+	assert(ok)
+	assert(v == u8(1))
+	_, ok = fingering[4].(StringStateMuted)
+	assert(ok)
 
 	fingering = []StringState{StringStateOpen{}, 12, 12, 12, 12}
 	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
-	assert(
-		slice.equal(
-			[]StringState {
-				4,
-				StringStateOpen{},
-				StringStateOpen{},
-				StringStateOpen{},
-				StringStateOpen{},
-			},
-			fingering,
-		),
-	)
+
+	v, ok = fingering[0].(u8)
+	assert(ok)
+	assert(v == u8(4))
+	_, ok = fingering[1].(StringStateMuted)
+	assert(ok)
+	_, ok = fingering[2].(StringStateMuted)
+	assert(ok)
+	_, ok = fingering[3].(StringStateMuted)
+	assert(ok)
+	_, ok = fingering[4].(StringStateMuted)
+	assert(ok)
 }
 
 @(test)
@@ -483,34 +484,47 @@ test_increment_string_state :: proc(_: ^testing.T) {
 	{
 		string_state: StringState = StringStateMuted{}
 		terminal := increment_string_state(&string_state, string_layout)
-		assert(string_state == StringStateOpen{})
 		assert(!terminal)
+		_, ok := string_state.(StringStateOpen)
+		assert(ok)
 	}
 
 
 	{
 		string_state: StringState = StringStateOpen{}
-		increment_string_state(&string_state, string_layout)
-		assert(string_state == string_layout.first_fret)
+		terminal := increment_string_state(&string_state, string_layout)
+		assert(!terminal)
+
+		v, ok := string_state.(u8)
+		assert(ok)
+		assert(v == string_layout.first_fret)
 	}
 
 	{
 		string_state: StringState = string_layout.first_fret
 		terminal := increment_string_state(&string_state, string_layout)
-		assert(string_state == string_layout.first_fret + 1)
 		assert(!terminal)
+
+		v, ok := string_state.(u8)
+		assert(ok)
+		assert(v == string_layout.first_fret + 1)
 	}
 
 	{
 		string_state: StringState = string_layout.last_fret - 1
 		terminal := increment_string_state(&string_state, string_layout)
-		assert(string_state == string_layout.last_fret)
 		assert(!terminal)
+
+		v, ok := string_state.(u8)
+		assert(ok)
+		assert(v == string_layout.last_fret)
 	}
 	{
 		string_state: StringState = string_layout.last_fret
 		terminal := increment_string_state(&string_state, string_layout)
-		assert(string_state == StringStateMuted{})
 		assert(terminal)
+
+		_, ok := string_state.(StringStateMuted)
+		assert(ok)
 	}
 }
