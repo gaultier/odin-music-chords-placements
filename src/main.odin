@@ -59,7 +59,7 @@ next_note_kind :: proc(note_kind: NoteKind, step: Step) -> NoteKind {
 	return note_add(note_kind, cast(u8)step)
 }
 
-compute_scale :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
+make_scale :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
 	res := Scale{}
 	res[0] = note_kind
 
@@ -235,10 +235,10 @@ find_fingerings_for_chord :: proc(
 
 main :: proc() {
 	for note in NoteKind {
-		major_scale := compute_scale(note, major_scale_steps)
+		major_scale := make_scale(note, major_scale_steps)
 		fmt.println(note, major_scale)
 
-		minor_scale := compute_scale(note, minor_scale_steps)
+		minor_scale := make_scale(note, minor_scale_steps)
 		fmt.println(note, minor_scale)
 
 		fmt.println(note, make_chord(major_scale, major_chord))
@@ -252,8 +252,8 @@ main :: proc() {
 	fmt.println(find_fret_for_note_on_string(.F, 2, BANJO_LAYOUT[1]))
 	fmt.println(find_fret_for_note_on_string(.A_Sharp, 0, BANJO_LAYOUT[0]))
 
-	major_scale := compute_scale(.C, major_scale_steps)
-	c_major_chord := make_chord(major_scale, major_chord)
+	c_major_scale := make_scale(.C, major_scale_steps)
+	c_major_chord := make_chord(c_major_scale, major_chord)
 	c_major_chord_slice := small_array.slice(&c_major_chord)
 	c_major_chord_fingerings := find_fingerings_for_chord(c_major_chord_slice, BANJO_LAYOUT, 0)
 	defer delete(c_major_chord_fingerings)
@@ -269,19 +269,35 @@ main :: proc() {
 }
 
 @(test)
-test_compute_scale :: proc(_: ^testing.T) {
-	major_scale := compute_scale(.A, major_scale_steps)
+test_make_scale :: proc(_: ^testing.T) {
+	major_scale := make_scale(.A, major_scale_steps)
 	assert(major_scale == [7]NoteKind{.A, .B, .C_Sharp, .D, .E, .F_Sharp, .G_Sharp})
 
-	minor_scale := compute_scale(.A, minor_scale_steps)
+	minor_scale := make_scale(.A, minor_scale_steps)
 	assert(minor_scale == [7]NoteKind{.A, .B, .C, .D, .E, .F, .G})
+}
+
+@(test)
+test_make_chord :: proc(_: ^testing.T) {
+	c_major_scale := make_scale(.C, major_scale_steps)
+	c_major_chord := make_chord(c_major_scale, major_chord)
+	c_major_chord_slice := small_array.slice(&c_major_chord)
+
+	assert(slice.equal(c_major_chord_slice, []NoteKind{.C, .E, .G}))
+
+
+	d_major_scale := make_scale(.D, major_scale_steps)
+	d_major_chord := make_chord(d_major_scale, major_chord)
+	d_major_chord_slice := small_array.slice(&d_major_chord)
+
+	assert(slice.equal(d_major_chord_slice, []NoteKind{.D, .F_Sharp, .A}))
 }
 
 @(test)
 test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 
 	{
-		c_major_scale := compute_scale(.C, major_scale_steps)
+		c_major_scale := make_scale(.C, major_scale_steps)
 		c_major_chord := make_chord(c_major_scale, major_chord)
 
 		assert(
@@ -305,7 +321,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 
 
 	{
-		g_major_scale := compute_scale(.G, major_scale_steps)
+		g_major_scale := make_scale(.G, major_scale_steps)
 		g_major_chord := make_chord(g_major_scale, major_chord)
 		assert(
 			true ==
@@ -321,7 +337,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 @(test)
 test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 	{
-		c_major_scale := compute_scale(.C, major_scale_steps)
+		c_major_scale := make_scale(.C, major_scale_steps)
 		c_major_chord := make_chord(c_major_scale, major_chord)
 
 		assert(
