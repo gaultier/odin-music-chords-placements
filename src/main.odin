@@ -318,6 +318,19 @@ main :: proc() {
 			}
 		}
 	}
+	{
+		fingering := []StringState {
+			StringStateMuted{},
+			StringStateMuted{},
+			StringStateMuted{},
+			StringStateMuted{},
+			StringStateMuted{},
+		}
+		for next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS) {
+			fmt.println(fingering)
+		}
+
+	}
 }
 
 @(test)
@@ -534,5 +547,24 @@ test_increment_string_state :: proc(_: ^testing.T) {
 
 		_, ok := string_state.(StringStateMuted)
 		assert(ok)
+	}
+}
+
+@(test)
+test_make_note_for_string_state :: proc(_: ^testing.T) {
+	string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[0]
+	{
+		_, present := make_note_for_string_state(StringStateMuted{}, string_layout)
+		assert(!present)
+	}
+	{
+		note, present := make_note_for_string_state(StringStateOpen{}, string_layout)
+		assert(present)
+		assert(note == string_layout.open_note)
+	}
+	{
+		note, present := make_note_for_string_state(u8(2), string_layout)
+		assert(present)
+		assert(note == .A)
 	}
 }
