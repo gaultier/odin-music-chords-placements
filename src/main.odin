@@ -114,11 +114,13 @@ StringLayout :: struct {
 
 StringInstrumentLayout :: []StringLayout
 
-fingering_min_max :: proc(fingering: []StringState) -> (u8, u8, bool) {
-	min: u8 = 0
-	max: u8 = 0
-	ok := false
-
+fingering_min_max :: proc(
+	fingering: []StringState,
+) -> (
+	min: u8,
+	max: u8,
+	at_least_one_string_picked: bool,
+) {
 	for finger in fingering {
 		switch v in finger {
 		case StringStateMuted:
@@ -126,12 +128,12 @@ fingering_min_max :: proc(fingering: []StringState) -> (u8, u8, bool) {
 		case StringStateOpen:
 			continue
 		case u8:
-			ok = true
+			at_least_one_string_picked = true
 			if v < min {min = v}
 			if v > max {max = v}
 		}
 	}
-	return min, max, ok
+	return min, max, at_least_one_string_picked
 }
 
 
