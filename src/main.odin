@@ -322,4 +322,8 @@ test_next_fingering :: proc(_: ^testing.T) {
 	fingering := []u8{0, 0, 0, 0, 0}
 
 	assert(true == next_fingering(&fingering, banjo_layout))
+	assert(slice.equal([]u8{0, 0, 0, 0, 1}, fingering))
+
+	assert(true == next_fingering(&fingering, banjo_layout))
+	assert(slice.equal([]u8{0, 0, 0, 0, 2}, fingering))
 }
