@@ -146,8 +146,8 @@ is_fingering_for_chord_valid :: proc(
 
 	// Check that the distance between the first and last finger is <= MAX_FINGER_DISTANCE.
 	{
-		finger_start, finger_end, ok := fingering_min_max(fingering)
-		if ok {
+		finger_start, finger_end, at_least_one_string_picked := fingering_min_max(fingering)
+		if at_least_one_string_picked {
 			dist_squared := (finger_start - finger_end) * (finger_start - finger_end)
 
 			if dist_squared >= MAX_FINGER_DISTANCE * MAX_FINGER_DISTANCE {
@@ -307,6 +307,7 @@ main :: proc() {
 		g_major_scale := make_scale(.G, major_scale_steps)
 		g_major_chord := make_chord(g_major_scale, major_chord)
 		g_major_chord_slice := small_array.slice(&g_major_chord)
+		fmt.println(g_major_chord_slice)
 		g_major_chord_fingerings := find_all_fingerings_for_chord(
 			g_major_chord_slice,
 			BANJO_LAYOUT_STANDARD_5_STRINGS,
@@ -314,9 +315,9 @@ main :: proc() {
 		defer delete(g_major_chord_fingerings)
 
 		for fingering in g_major_chord_fingerings {
-			fmt.print("\n---fingering: ")
+			fmt.print("\n")
 			for finger, i in fingering {
-				string_layout := GUITAR_LAYOUT_STANDARD_6_STRING[i]
+				string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[i]
 				note, present := make_note_for_string_state(finger, string_layout)
 				if present {
 					fmt.print(finger, note, " | ")
