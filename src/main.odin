@@ -49,6 +49,8 @@ BANJO_LAYOUT :: StringInstrumentLayout {
 	{first_note = .D, first_fret = 1, last_fret = 12},
 }
 
+MAX_FINGER_DISTANCE :: 5
+
 note_add :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
 	return cast(NoteKind)((cast(u8)note_kind + offset) % 12)
 }
@@ -117,7 +119,6 @@ is_fingering_for_chord_valid :: proc(
 	// `fingering[a] = b` means: the string `a` is picked on fret `b`, or if `b == 0`, the string `a` is open.
 	fingering: []u8,
 ) -> bool {
-	max_finger_distance :: 5
 	assert(len(fingering) == len(instrument_layout))
 
 	// Check that the distance between the first and last finger is <= max_finger_distance.
@@ -126,7 +127,7 @@ is_fingering_for_chord_valid :: proc(
 		finger_end := slice.max(fingering)
 		dist_squared := (finger_start - finger_end) * (finger_start - finger_end)
 
-		if dist_squared >= max_finger_distance * max_finger_distance {
+		if dist_squared >= MAX_FINGER_DISTANCE * MAX_FINGER_DISTANCE {
 			return false
 		}
 	}
