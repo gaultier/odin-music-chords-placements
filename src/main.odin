@@ -40,6 +40,15 @@ minor_scale_steps :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Wh
 
 Scale :: [7]NoteKind
 
+
+BANJO_LAYOUT :: StringInstrumentLayout {
+	{first_note = .G, first_fret = 4, last_fret = 17},
+	{first_note = .D, first_fret = 1, last_fret = 12},
+	{first_note = .G, first_fret = 1, last_fret = 12},
+	{first_note = .B, first_fret = 1, last_fret = 12},
+	{first_note = .D, first_fret = 1, last_fret = 12},
+}
+
 note_add :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
 	return cast(NoteKind)((cast(u8)note_kind + offset) % 12)
 }
@@ -210,6 +219,7 @@ find_frets_for_chord :: proc(
 	return res[:]
 }
 
+
 main :: proc() {
 	for note in NoteKind {
 		major_scale := scale_for_note_kind(note, major_scale_steps)
@@ -226,33 +236,18 @@ main :: proc() {
 	}
 
 
-	banjo_layout := StringInstrumentLayout {
-		// {first_note = .G, first_fret = 4, last_fret = 17},
-		{first_note = .D, first_fret = 0, last_fret = 12},
-		{first_note = .G, first_fret = 0, last_fret = 12},
-		{first_note = .B, first_fret = 0, last_fret = 12},
-		{first_note = .D, first_fret = 0, last_fret = 12},
-	}
-
-	fmt.println(find_fret_for_note_on_string(.F, 2, banjo_layout[1]))
-	fmt.println(find_fret_for_note_on_string(.A_Sharp, 0, banjo_layout[0]))
+	fmt.println(find_fret_for_note_on_string(.F, 2, BANJO_LAYOUT[1]))
+	fmt.println(find_fret_for_note_on_string(.A_Sharp, 0, BANJO_LAYOUT[0]))
 
 	major_scale := scale_for_note_kind(.C, major_scale_steps)
 	c_major_chord := make_chord(major_scale, major_chord)
 	c_major_chord_slice := small_array.slice(&c_major_chord)
-	c_major_chord_frets := find_frets_for_chord(c_major_chord_slice, banjo_layout, 0)
+	c_major_chord_frets := find_frets_for_chord(c_major_chord_slice, BANJO_LAYOUT, 0)
 	fmt.println(c_major_chord_frets)
 }
 
 @(test)
 test_valid_fingering_for_chord :: proc(_: ^testing.T) {
-	banjo_layout := StringInstrumentLayout {
-		{first_note = .G, first_fret = 4, last_fret = 17},
-		{first_note = .D, first_fret = 0, last_fret = 12},
-		{first_note = .G, first_fret = 0, last_fret = 12},
-		{first_note = .B, first_fret = 0, last_fret = 12},
-		{first_note = .D, first_fret = 0, last_fret = 12},
-	}
 
 	{
 		c_major_scale := scale_for_note_kind(.C, major_scale_steps)
@@ -262,7 +257,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			true ==
 			is_fingering_for_chord_valid(
 				small_array.slice(&c_major_chord),
-				banjo_layout,
+				BANJO_LAYOUT,
 				[]u8{0, 2, 0, 1, 2},
 			),
 		)
@@ -271,7 +266,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			false ==
 			is_fingering_for_chord_valid(
 				small_array.slice(&c_major_chord),
-				banjo_layout,
+				BANJO_LAYOUT,
 				[]u8{0, 2, 2, 1, 2},
 			),
 		)
@@ -285,7 +280,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			true ==
 			is_fingering_for_chord_valid(
 				small_array.slice(&g_major_chord),
-				banjo_layout,
+				BANJO_LAYOUT,
 				[]u8{0, 0, 0, 0, 0},
 			),
 		)
@@ -294,14 +289,6 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 
 @(test)
 test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
-	banjo_layout := StringInstrumentLayout {
-		{first_note = .G, first_fret = 4, last_fret = 17},
-		{first_note = .D, first_fret = 0, last_fret = 12},
-		{first_note = .G, first_fret = 0, last_fret = 12},
-		{first_note = .B, first_fret = 0, last_fret = 12},
-		{first_note = .D, first_fret = 0, last_fret = 12},
-	}
-
 	{
 		c_major_scale := scale_for_note_kind(.C, major_scale_steps)
 		c_major_chord := make_chord(c_major_scale, major_chord)
@@ -310,7 +297,7 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 			false ==
 			is_fingering_for_chord_valid(
 				small_array.slice(&c_major_chord),
-				banjo_layout,
+				BANJO_LAYOUT,
 				[]u8{0, 2, 12, 1, 2},
 			),
 		)
@@ -319,27 +306,20 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 
 @(test)
 test_next_fingering :: proc(_: ^testing.T) {
-	banjo_layout := StringInstrumentLayout {
-		{first_note = .G, first_fret = 4, last_fret = 17},
-		{first_note = .D, first_fret = 1, last_fret = 12},
-		{first_note = .G, first_fret = 1, last_fret = 12},
-		{first_note = .B, first_fret = 1, last_fret = 12},
-		{first_note = .D, first_fret = 1, last_fret = 12},
-	}
 	fingering := []u8{0, 0, 0, 0, 0}
 
-	assert(true == next_fingering(&fingering, banjo_layout))
+	assert(true == next_fingering(&fingering, BANJO_LAYOUT))
 	assert(slice.equal([]u8{0, 0, 0, 0, 1}, fingering))
 
-	assert(true == next_fingering(&fingering, banjo_layout))
+	assert(true == next_fingering(&fingering, BANJO_LAYOUT))
 	assert(slice.equal([]u8{0, 0, 0, 0, 2}, fingering))
 
 
 	fingering = []u8{0, 0, 0, 0, 12}
-	assert(true == next_fingering(&fingering, banjo_layout))
+	assert(true == next_fingering(&fingering, BANJO_LAYOUT))
 	assert(slice.equal([]u8{0, 0, 0, 1, 0}, fingering))
 
 	fingering = []u8{0, 12, 12, 12, 12}
-	assert(true == next_fingering(&fingering, banjo_layout))
+	assert(true == next_fingering(&fingering, BANJO_LAYOUT))
 	assert(slice.equal([]u8{4, 0, 0, 0, 0}, fingering))
 }
