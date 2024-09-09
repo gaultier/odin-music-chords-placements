@@ -41,7 +41,7 @@ Scale :: [7]NoteKind
 
 
 BANJO_LAYOUT_STANDARD_5_STRINGS := StringInstrumentLayout {
-	{open_note = .G, first_fret = 4, last_fret = 17},
+	{open_note = .G, first_fret = 5, last_fret = 17},
 	{open_note = .D, first_fret = 1, last_fret = 12},
 	{open_note = .G, first_fret = 1, last_fret = 12},
 	{open_note = .B, first_fret = 1, last_fret = 12},
@@ -241,14 +241,19 @@ find_all_fingerings_for_chord :: proc(
 	fingering_slice := small_array.slice(&fingering)
 
 	for next_fingering(&fingering_slice, instrument_layout) {
-		if is_fingering_for_chord_valid(chord, instrument_layout, small_array.slice(&fingering)) {
-			clone, err := slice.clone(small_array.slice(&fingering))
-			if err != nil {
-				panic("clone failed")
-			}
+		if !is_fingering_for_chord_valid(
+			chord,
+			instrument_layout,
+			small_array.slice(&fingering),
+		) {continue}
 
-			append(&res, clone)
+		clone, err := slice.clone(small_array.slice(&fingering))
+		if err != nil {
+			panic("clone failed")
 		}
+
+		append(&res, clone)
+
 	}
 
 	return res[:]
@@ -275,37 +280,36 @@ make_note_for_string_state :: proc(
 }
 
 main :: proc() {
-	{
-		c_major_scale := make_scale(.C, major_scale_steps)
-		c_major_chord := make_chord(c_major_scale, major_chord)
-		c_major_chord_slice := small_array.slice(&c_major_chord)
-		c_major_chord_fingerings := find_all_fingerings_for_chord(
-			c_major_chord_slice,
-			BANJO_LAYOUT_STANDARD_5_STRINGS,
-		)
-		defer delete(c_major_chord_fingerings)
+	// {
+	// 	c_major_scale := make_scale(.C, major_scale_steps)
+	// 	c_major_chord := make_chord(c_major_scale, major_chord)
+	// 	c_major_chord_slice := small_array.slice(&c_major_chord)
+	// 	c_major_chord_fingerings := find_all_fingerings_for_chord(
+	// 		c_major_chord_slice,
+	// 		BANJO_LAYOUT_STANDARD_5_STRINGS,
+	// 	)
+	// 	defer delete(c_major_chord_fingerings)
 
-		for fingering in c_major_chord_fingerings {
-			fmt.print("\n---fingering: ")
-			for finger, i in fingering {
-				string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[i]
-				note, ok := make_note_for_string_state(finger, string_layout)
-				if ok {
-					fmt.print(finger, note, " | ")
-				} else {
-					fmt.print("x  | ")
-				}
-			}
-		}
-	}
-	fmt.println("\n---------- GUITAR ----------")
+	// 	for fingering in c_major_chord_fingerings {
+	// 		for finger, i in fingering {
+	// 			string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[i]
+	// 			note, ok := make_note_for_string_state(finger, string_layout)
+	// 			if ok {
+	// 				fmt.print(finger, note, " | ")
+	// 			} else {
+	// 				fmt.print("x  | ")
+	// 			}
+	// 		}
+	// 	}
+	// }
+	fmt.println("\n---------- Banjo G ----------")
 	{
 		g_major_scale := make_scale(.G, major_scale_steps)
 		g_major_chord := make_chord(g_major_scale, major_chord)
 		g_major_chord_slice := small_array.slice(&g_major_chord)
 		g_major_chord_fingerings := find_all_fingerings_for_chord(
 			g_major_chord_slice,
-			GUITAR_LAYOUT_STANDARD_6_STRING,
+			BANJO_LAYOUT_STANDARD_5_STRINGS,
 		)
 		defer delete(g_major_chord_fingerings)
 
@@ -313,24 +317,35 @@ main :: proc() {
 			fmt.print("\n---fingering: ")
 			for finger, i in fingering {
 				string_layout := GUITAR_LAYOUT_STANDARD_6_STRING[i]
-				note, ok := make_note_for_string_state(finger, string_layout)
-				fmt.print(finger, note, ok, ", ")
+				note, present := make_note_for_string_state(finger, string_layout)
+				if present {
+					fmt.print(finger, note, " | ")
+				} else {
+					fmt.print("x  | ")
+				}
 			}
 		}
 	}
-	{
-		fingering := []StringState {
-			StringStateMuted{},
-			StringStateMuted{},
-			StringStateMuted{},
-			StringStateMuted{},
-			StringStateMuted{},
-		}
-		for next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS) {
-			fmt.println(fingering)
-		}
+	// fmt.println("\n---------- GUITAR ----------")
+	// {
+	// 	g_major_scale := make_scale(.G, major_scale_steps)
+	// 	g_major_chord := make_chord(g_major_scale, major_chord)
+	// 	g_major_chord_slice := small_array.slice(&g_major_chord)
+	// 	g_major_chord_fingerings := find_all_fingerings_for_chord(
+	// 		g_major_chord_slice,
+	// 		GUITAR_LAYOUT_STANDARD_6_STRING,
+	// 	)
+	// 	defer delete(g_major_chord_fingerings)
 
-	}
+	// 	for fingering in g_major_chord_fingerings {
+	// 		fmt.print("\n---fingering: ")
+	// 		for finger, i in fingering {
+	// 			string_layout := GUITAR_LAYOUT_STANDARD_6_STRING[i]
+	// 			note, ok := make_note_for_string_state(finger, string_layout)
+	// 			fmt.print(finger, note, ok, ", ")
+	// 		}
+	// 	}
+	// }
 }
 
 @(test)
@@ -487,7 +502,7 @@ test_next_fingering :: proc(_: ^testing.T) {
 
 	v, ok = fingering[0].(u8)
 	assert(ok)
-	assert(v == u8(4))
+	assert(v == u8(BANJO_LAYOUT_STANDARD_5_STRINGS[0].first_fret))
 	_, ok = fingering[1].(StringStateMuted)
 	assert(ok)
 	_, ok = fingering[2].(StringStateMuted)
