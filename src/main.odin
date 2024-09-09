@@ -104,12 +104,17 @@ find_fret_for_note_on_string :: proc(
 	bool,
 ) {
 	for i := max(starting_fret, string_layout.first_fret); i < string_layout.last_fret; i += 1 {
+		// TODO: check if correct.
 		current_note := note_add(string_layout.open_note, i - string_layout.first_fret)
 		if current_note == note_kind {
 			return i, true
 		}
 	}
 	return 0, false
+}
+
+is_string_picked :: proc(finger: u8) -> bool {
+	return finger > 0
 }
 
 is_fingering_for_chord_valid :: proc(
@@ -123,8 +128,18 @@ is_fingering_for_chord_valid :: proc(
 
 	// Check that the distance between the first and last finger is <= max_finger_distance.
 	{
-		finger_start := slice.min(fingering)
-		finger_end := slice.max(fingering)
+		picked_strings, err := slice.filter(
+			fingering,
+			is_string_picked,
+			allocator = context.temp_allocator,
+		)
+		if err != nil {
+			panic("failed to allocate")
+		}
+		defer free_all(context.temp_allocator)
+
+		finger_start := slice.min(picked_strings)
+		finger_end := slice.max(picked_strings)
 		dist_squared := (finger_start - finger_end) * (finger_start - finger_end)
 
 		if dist_squared >= MAX_FINGER_DISTANCE * MAX_FINGER_DISTANCE {
@@ -136,10 +151,7 @@ is_fingering_for_chord_valid :: proc(
 	{
 		for finger, string_i in fingering {
 			string_layout := instrument_layout[string_i]
-			note := string_layout.open_note
-			if finger > 0 {
-				note = note_add(string_layout.open_note, finger - string_layout.first_fret)
-			}
+			note := note_add(string_layout.open_note, finger)
 
 			if !slice.contains(chord, note) {
 				return false
