@@ -256,6 +256,7 @@ main :: proc() {
 	c_major_chord := make_chord(major_scale, major_chord)
 	c_major_chord_slice := small_array.slice(&c_major_chord)
 	c_major_chord_fingerings := find_fingerings_for_chord(c_major_chord_slice, BANJO_LAYOUT, 0)
+	defer delete(c_major_chord_fingerings)
 
 	for fingering in c_major_chord_fingerings {
 		fmt.print("\n---fingering: ")
