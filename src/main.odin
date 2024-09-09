@@ -40,12 +40,21 @@ minor_scale_steps :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Wh
 Scale :: [7]NoteKind
 
 
-BANJO_LAYOUT := StringInstrumentLayout {
+BANJO_LAYOUT_STANDARD_5_STRINGS := StringInstrumentLayout {
 	{open_note = .G, first_fret = 4, last_fret = 17},
 	{open_note = .D, first_fret = 1, last_fret = 12},
 	{open_note = .G, first_fret = 1, last_fret = 12},
 	{open_note = .B, first_fret = 1, last_fret = 12},
 	{open_note = .D, first_fret = 1, last_fret = 12},
+}
+
+GUITAR_LAYOUT_STANDARD_6_STRING := StringInstrumentLayout {
+	{open_note = .E, first_fret = 1, last_fret = 12},
+	{open_note = .A, first_fret = 1, last_fret = 12},
+	{open_note = .D, first_fret = 1, last_fret = 12},
+	{open_note = .G, first_fret = 1, last_fret = 12},
+	{open_note = .B, first_fret = 1, last_fret = 12},
+	{open_note = .E, first_fret = 1, last_fret = 12},
 }
 
 MAX_FINGER_DISTANCE :: 5
@@ -198,7 +207,7 @@ find_fingerings_for_chord :: proc(
 	fingering_slice := small_array.slice(&fingering)
 
 
-	for next_fingering(&fingering_slice, BANJO_LAYOUT) {
+	for next_fingering(&fingering_slice, instrument_layout) {
 		if is_fingering_for_chord_valid(chord, instrument_layout, small_array.slice(&fingering)) {
 			clone, err := slice.clone(small_array.slice(&fingering))
 			if err != nil {
@@ -215,18 +224,45 @@ find_fingerings_for_chord :: proc(
 
 
 main :: proc() {
-	c_major_scale := make_scale(.C, major_scale_steps)
-	c_major_chord := make_chord(c_major_scale, major_chord)
-	c_major_chord_slice := small_array.slice(&c_major_chord)
-	c_major_chord_fingerings := find_fingerings_for_chord(c_major_chord_slice, BANJO_LAYOUT, 0)
-	defer delete(c_major_chord_fingerings)
+	{
+		c_major_scale := make_scale(.C, major_scale_steps)
+		c_major_chord := make_chord(c_major_scale, major_chord)
+		c_major_chord_slice := small_array.slice(&c_major_chord)
+		c_major_chord_fingerings := find_fingerings_for_chord(
+			c_major_chord_slice,
+			BANJO_LAYOUT_STANDARD_5_STRINGS,
+			0,
+		)
+		defer delete(c_major_chord_fingerings)
 
-	for fingering in c_major_chord_fingerings {
-		fmt.print("\n---fingering: ")
-		for finger, i in fingering {
-			string_layout := BANJO_LAYOUT[i]
-			note := note_add(string_layout.open_note, finger)
-			fmt.print(finger, note, ", ")
+		for fingering in c_major_chord_fingerings {
+			fmt.print("\n---fingering: ")
+			for finger, i in fingering {
+				string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[i]
+				note := note_add(string_layout.open_note, finger)
+				fmt.print(finger, note, ", ")
+			}
+		}
+	}
+	fmt.println("---------- GUITAR ----------")
+	{
+		g_major_scale := make_scale(.G, major_scale_steps)
+		g_major_chord := make_chord(g_major_scale, major_chord)
+		g_major_chord_slice := small_array.slice(&g_major_chord)
+		g_major_chord_fingerings := find_fingerings_for_chord(
+			g_major_chord_slice,
+			GUITAR_LAYOUT_STANDARD_6_STRING,
+			0,
+		)
+		defer delete(g_major_chord_fingerings)
+
+		for fingering in g_major_chord_fingerings {
+			fmt.print("\n---fingering: ")
+			for finger, i in fingering {
+				string_layout := GUITAR_LAYOUT_STANDARD_6_STRING[i]
+				note := note_add(string_layout.open_note, finger)
+				fmt.print(finger, note, ", ")
+			}
 		}
 	}
 }
@@ -258,7 +294,6 @@ test_make_chord :: proc(_: ^testing.T) {
 
 @(test)
 test_valid_fingering_for_chord :: proc(_: ^testing.T) {
-
 	{
 		c_major_scale := make_scale(.C, major_scale_steps)
 		c_major_chord := make_chord(c_major_scale, major_chord)
@@ -267,7 +302,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			true ==
 			is_fingering_for_chord_valid(
 				small_array.slice(&c_major_chord),
-				BANJO_LAYOUT,
+				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]u8{0, 2, 0, 1, 2},
 			),
 		)
@@ -276,7 +311,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			false ==
 			is_fingering_for_chord_valid(
 				small_array.slice(&c_major_chord),
-				BANJO_LAYOUT,
+				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]u8{0, 2, 2, 1, 2},
 			),
 		)
@@ -290,7 +325,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			true ==
 			is_fingering_for_chord_valid(
 				small_array.slice(&g_major_chord),
-				BANJO_LAYOUT,
+				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]u8{0, 0, 0, 0, 0},
 			),
 		)
@@ -307,7 +342,7 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 			false ==
 			is_fingering_for_chord_valid(
 				small_array.slice(&c_major_chord),
-				BANJO_LAYOUT,
+				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]u8{0, 2, 12, 1, 2},
 			),
 		)
@@ -318,18 +353,18 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 test_next_fingering :: proc(_: ^testing.T) {
 	fingering := []u8{0, 0, 0, 0, 0}
 
-	assert(true == next_fingering(&fingering, BANJO_LAYOUT))
+	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
 	assert(slice.equal([]u8{0, 0, 0, 0, 1}, fingering))
 
-	assert(true == next_fingering(&fingering, BANJO_LAYOUT))
+	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
 	assert(slice.equal([]u8{0, 0, 0, 0, 2}, fingering))
 
 
 	fingering = []u8{0, 0, 0, 0, 12}
-	assert(true == next_fingering(&fingering, BANJO_LAYOUT))
+	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
 	assert(slice.equal([]u8{0, 0, 0, 1, 0}, fingering))
 
 	fingering = []u8{0, 12, 12, 12, 12}
-	assert(true == next_fingering(&fingering, BANJO_LAYOUT))
+	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
 	assert(slice.equal([]u8{4, 0, 0, 0, 0}, fingering))
 }
