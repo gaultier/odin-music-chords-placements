@@ -171,24 +171,29 @@ is_fingering_for_chord_valid :: proc(
 	return true
 }
 
-// Returns: true if we reach the terminal state, false otherwise.
-increment_string_state :: proc(string_state: ^StringState, string_layout: StringLayout) -> bool {
+increment_string_state :: proc(
+	string_state: ^StringState,
+	string_layout: StringLayout,
+) -> (
+	keep_going: bool,
+) {
 	switch v in string_state^ {
 	case StringStateMuted:
 		string_state^ = StringStateOpen{}
-		return false
+		return true
 
 	case StringStateOpen:
 		string_state^ = string_layout.first_fret
-		return false
+		return true
 
 	case u8:
 		if v == string_layout.last_fret {
 			string_state^ = StringStateMuted{}
-			return true
+			// Terminal state.
+			return false
 		} else {
 			string_state^ = v + 1
-			return false
+			return true
 		}
 	}
 	unreachable()
@@ -197,16 +202,18 @@ increment_string_state :: proc(string_state: ^StringState, string_layout: String
 next_fingering :: proc(
 	fingering: ^[]StringState,
 	instrumentLayout: StringInstrumentLayout,
-) -> bool {
+) -> (
+	keep_going: bool,
+) {
 	assert(len(fingering) > 0)
 	assert(len(fingering) == len(instrumentLayout))
 
 	#reverse for _, string_i in fingering {
 		string_layout := instrumentLayout[string_i]
 
-		terminal := increment_string_state(&fingering[string_i], string_layout)
+		keep_going = increment_string_state(&fingering[string_i], string_layout)
 
-		if !terminal {return true}
+		if keep_going {return true}
 
 		// The slot has reached the maximum value, need to inspect the left-hand part to increment it.
 	}
@@ -483,8 +490,8 @@ test_increment_string_state :: proc(_: ^testing.T) {
 
 	{
 		string_state: StringState = StringStateMuted{}
-		terminal := increment_string_state(&string_state, string_layout)
-		assert(!terminal)
+		keep_going := increment_string_state(&string_state, string_layout)
+		assert(keep_going)
 		_, ok := string_state.(StringStateOpen)
 		assert(ok)
 	}
@@ -492,8 +499,8 @@ test_increment_string_state :: proc(_: ^testing.T) {
 
 	{
 		string_state: StringState = StringStateOpen{}
-		terminal := increment_string_state(&string_state, string_layout)
-		assert(!terminal)
+		keep_going := increment_string_state(&string_state, string_layout)
+		assert(keep_going)
 
 		v, ok := string_state.(u8)
 		assert(ok)
@@ -502,8 +509,8 @@ test_increment_string_state :: proc(_: ^testing.T) {
 
 	{
 		string_state: StringState = string_layout.first_fret
-		terminal := increment_string_state(&string_state, string_layout)
-		assert(!terminal)
+		keep_going := increment_string_state(&string_state, string_layout)
+		assert(keep_going)
 
 		v, ok := string_state.(u8)
 		assert(ok)
@@ -512,8 +519,8 @@ test_increment_string_state :: proc(_: ^testing.T) {
 
 	{
 		string_state: StringState = string_layout.last_fret - 1
-		terminal := increment_string_state(&string_state, string_layout)
-		assert(!terminal)
+		keep_going := increment_string_state(&string_state, string_layout)
+		assert(keep_going)
 
 		v, ok := string_state.(u8)
 		assert(ok)
@@ -521,8 +528,8 @@ test_increment_string_state :: proc(_: ^testing.T) {
 	}
 	{
 		string_state: StringState = string_layout.last_fret
-		terminal := increment_string_state(&string_state, string_layout)
-		assert(terminal)
+		keep_going := increment_string_state(&string_state, string_layout)
+		assert(!keep_going)
 
 		_, ok := string_state.(StringStateMuted)
 		assert(ok)
