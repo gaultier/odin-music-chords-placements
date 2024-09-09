@@ -86,6 +86,11 @@ major_chord_7 :: ChordKind{1, 3, 5, 7}
 
 Chord :: small_array.Small_Array(10, NoteKind)
 
+MAX_STRINGS_SUPPORTED :: 10
+// `fingering[n] == 0`: String `n` is open.
+// `fingering[n] == m`: String `n` is picked on fret `m`.
+Fingering :: small_array.Small_Array(MAX_STRINGS_SUPPORTED, u8)
+
 make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 	res := Chord{}
 
@@ -199,13 +204,12 @@ find_fingerings_for_chord :: proc(
 ) -> [][]u8 {
 
 	res: [dynamic][]u8
-	fingering := small_array.Small_Array(10, u8){}
+	fingering := Fingering{}
 	for _ in instrument_layout {
 		small_array.append(&fingering, 0)
 	}
 	assert(len(instrument_layout) == small_array.len(fingering))
 	fingering_slice := small_array.slice(&fingering)
-
 
 	for next_fingering(&fingering_slice, instrument_layout) {
 		if is_fingering_for_chord_valid(chord, instrument_layout, small_array.slice(&fingering)) {
@@ -244,7 +248,7 @@ main :: proc() {
 			}
 		}
 	}
-	fmt.println("---------- GUITAR ----------")
+	fmt.println("\n---------- GUITAR ----------")
 	{
 		g_major_scale := make_scale(.G, major_scale_steps)
 		g_major_chord := make_chord(g_major_scale, major_chord)
