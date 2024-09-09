@@ -42,11 +42,11 @@ Scale :: [7]NoteKind
 
 
 BANJO_LAYOUT :: StringInstrumentLayout {
-	{first_note = .G, first_fret = 4, last_fret = 17},
-	{first_note = .D, first_fret = 1, last_fret = 12},
-	{first_note = .G, first_fret = 1, last_fret = 12},
-	{first_note = .B, first_fret = 1, last_fret = 12},
-	{first_note = .D, first_fret = 1, last_fret = 12},
+	{open_note = .G, first_fret = 4, last_fret = 17},
+	{open_note = .D, first_fret = 1, last_fret = 12},
+	{open_note = .G, first_fret = 1, last_fret = 12},
+	{open_note = .B, first_fret = 1, last_fret = 12},
+	{open_note = .D, first_fret = 1, last_fret = 12},
 }
 
 MAX_FINGER_DISTANCE :: 5
@@ -88,7 +88,7 @@ make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 }
 
 StringLayout :: struct {
-	first_note: NoteKind,
+	open_note:  NoteKind,
 	first_fret: u8,
 	last_fret:  u8,
 }
@@ -104,7 +104,7 @@ find_fret_for_note_on_string :: proc(
 	bool,
 ) {
 	for i := max(starting_fret, string_layout.first_fret); i < string_layout.last_fret; i += 1 {
-		current_note := note_add(string_layout.first_note, i - string_layout.first_fret)
+		current_note := note_add(string_layout.open_note, i - string_layout.first_fret)
 		if current_note == note_kind {
 			return i, true
 		}
@@ -136,9 +136,9 @@ is_fingering_for_chord_valid :: proc(
 	{
 		for finger, string_i in fingering {
 			string_layout := instrument_layout[string_i]
-			note := string_layout.first_note
+			note := string_layout.open_note
 			if finger > 0 {
-				note = note_add(string_layout.first_note, finger - string_layout.first_fret)
+				note = note_add(string_layout.open_note, finger - string_layout.first_fret)
 			}
 
 			if !slice.contains(chord, note) {
