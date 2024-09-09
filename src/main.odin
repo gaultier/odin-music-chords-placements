@@ -160,9 +160,11 @@ is_fingering_for_chord_valid :: proc(
 	{
 		for &finger, string_i in fingering {
 			string_layout := instrument_layout[string_i]
-			note, ok := make_note_for_string_state(finger, string_layout)
+			note, muted := make_note_for_string_state(finger, string_layout)
 			// If the string is muted, it cannot invalidate the chord.
-			if ok && !slice.contains(chord, note) {
+			if muted {continue}
+
+			if !slice.contains(chord, note) {
 				return false
 			}
 		}
@@ -264,16 +266,16 @@ make_note_for_string_state :: proc(
 	string_state: StringState,
 	string_layout: StringLayout,
 ) -> (
-	NoteKind,
-	bool,
+	note: NoteKind,
+	muted: bool,
 ) {
 	switch v in string_state {
 	case StringStateMuted:
-		return NoteKind{}, false
+		return NoteKind{}, true
 	case StringStateOpen:
-		return string_layout.open_note, true
+		return string_layout.open_note, false
 	case u8:
-		return note_add(string_layout.open_note, v), true
+		return note_add(string_layout.open_note, v), false
 	}
 
 	unreachable()
@@ -318,11 +320,11 @@ main :: proc() {
 			fmt.print("\n")
 			for finger, i in fingering {
 				string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[i]
-				note, present := make_note_for_string_state(finger, string_layout)
-				if present {
-					fmt.print(finger, note, " | ")
-				} else {
+				note, muted := make_note_for_string_state(finger, string_layout)
+				if muted {
 					fmt.print("x  | ")
+				} else {
+					fmt.print(finger, note, " | ")
 				}
 			}
 		}
@@ -570,17 +572,17 @@ test_increment_string_state :: proc(_: ^testing.T) {
 test_make_note_for_string_state :: proc(_: ^testing.T) {
 	string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[0]
 	{
-		_, present := make_note_for_string_state(StringStateMuted{}, string_layout)
-		assert(!present)
+		_, muted := make_note_for_string_state(StringStateMuted{}, string_layout)
+		assert(muted)
 	}
 	{
-		note, present := make_note_for_string_state(StringStateOpen{}, string_layout)
-		assert(present)
+		note, muted := make_note_for_string_state(StringStateOpen{}, string_layout)
+		assert(!muted)
 		assert(note == string_layout.open_note)
 	}
 	{
-		note, present := make_note_for_string_state(u8(2), string_layout)
-		assert(present)
+		note, muted := make_note_for_string_state(u8(2), string_layout)
+		assert(!muted)
 		assert(note == .A)
 	}
 }
