@@ -57,6 +57,7 @@ GUITAR_LAYOUT_STANDARD_6_STRING := StringInstrumentLayout {
 	{open_note = .E, first_fret = 1, last_fret = 12},
 }
 
+// Maximum distance between the two most remote fingers.
 MAX_FINGER_DISTANCE :: 5
 
 note_add :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
@@ -121,7 +122,7 @@ is_fingering_for_chord_valid :: proc(
 ) -> bool {
 	assert(len(fingering) == len(instrument_layout))
 
-	// Check that the distance between the first and last finger is <= max_finger_distance.
+	// Check that the distance between the first and last finger is <= MAX_FINGER_DISTANCE.
 	{
 		picked_strings, err := slice.filter(
 			fingering,
