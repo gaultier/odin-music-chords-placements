@@ -171,8 +171,8 @@ is_fingering_for_chord_valid :: proc(
 	return true
 }
 
-// Returns: true if we (safely) overflowed, false otherwise.
-increment_fret :: proc(fret: ^StringState, string_layout: StringLayout) -> bool {
+// Returns: true if we reach the terminal state, false otherwise.
+increment_string_state :: proc(fret: ^StringState, string_layout: StringLayout) -> bool {
 	switch v in fret^ {
 	case StringStateMuted:
 		fret^ = StringStateOpen{}
@@ -204,9 +204,9 @@ next_fingering :: proc(
 	#reverse for _, string_i in fingering {
 		string_layout := instrumentLayout[string_i]
 
-		overflowed := increment_fret(&fingering[string_i], string_layout)
+		terminal := increment_string_state(&fingering[string_i], string_layout)
 
-		if !overflowed {return true}
+		if !terminal {return true}
 
 		// The slot has reached the maximum value, need to inspect the left-hand part to increment it.
 	}
@@ -244,7 +244,6 @@ find_fingerings_for_chord :: proc(
 			append(&res, clone)
 		}
 	}
-
 
 	return res[:]
 }
@@ -475,4 +474,43 @@ test_next_fingering :: proc(_: ^testing.T) {
 			fingering,
 		),
 	)
+}
+
+@(test)
+test_increment_string_state :: proc(_: ^testing.T) {
+	string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[0]
+
+	{
+		string_state: StringState = StringStateMuted{}
+		terminal := increment_string_state(&string_state, string_layout)
+		assert(string_state == StringStateOpen{})
+		assert(!terminal)
+	}
+
+
+	{
+		string_state: StringState = StringStateOpen{}
+		increment_string_state(&string_state, string_layout)
+		assert(string_state == string_layout.first_fret)
+	}
+
+	{
+		string_state: StringState = string_layout.first_fret
+		terminal := increment_string_state(&string_state, string_layout)
+		assert(string_state == string_layout.first_fret + 1)
+		assert(!terminal)
+	}
+
+	{
+		string_state: StringState = string_layout.last_fret - 1
+		terminal := increment_string_state(&string_state, string_layout)
+		assert(string_state == string_layout.last_fret)
+		assert(!terminal)
+	}
+	{
+		string_state: StringState = string_layout.last_fret
+		terminal := increment_string_state(&string_state, string_layout)
+		assert(string_state == StringStateMuted{})
+		assert(terminal)
+	}
 }
