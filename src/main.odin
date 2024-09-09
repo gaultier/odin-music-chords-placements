@@ -201,7 +201,8 @@ next_fingering :: proc(fingering: ^[]u8, instrumentLayout: StringInstrumentLayou
 // - Each string is either muted, open, or picked by one finger and produces 0 (muted) or 1 (otherwise) note .
 // - The maximum distance between all picked frets is 4 or 5 due to the physical length of fingers.
 // - Every fret of every string gets considered
-find_frets_for_chord :: proc(
+// TODO: muted strings.
+find_fingerings_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
 	starting_fret: u8,
@@ -254,7 +255,7 @@ main :: proc() {
 	major_scale := scale_for_note_kind(.C, major_scale_steps)
 	c_major_chord := make_chord(major_scale, major_chord)
 	c_major_chord_slice := small_array.slice(&c_major_chord)
-	c_major_chord_fingerings := find_frets_for_chord(c_major_chord_slice, BANJO_LAYOUT, 0)
+	c_major_chord_fingerings := find_fingerings_for_chord(c_major_chord_slice, BANJO_LAYOUT, 0)
 
 	for fingering in c_major_chord_fingerings {
 		fmt.print("\n---fingering: ")
