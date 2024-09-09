@@ -2,7 +2,6 @@ package main
 
 import "core:container/small_array"
 import "core:fmt"
-import "core:math"
 import "core:slice"
 import "core:testing"
 
@@ -94,24 +93,6 @@ StringLayout :: struct {
 }
 
 StringInstrumentLayout :: []StringLayout
-
-find_fret_for_note_on_string :: proc(
-	note_kind: NoteKind,
-	starting_fret: u8,
-	string_layout: StringLayout,
-) -> (
-	u8,
-	bool,
-) {
-	for i := max(starting_fret, string_layout.first_fret); i < string_layout.last_fret; i += 1 {
-		// TODO: check if correct.
-		current_note := note_add(string_layout.open_note, i - string_layout.first_fret)
-		if current_note == note_kind {
-			return i, true
-		}
-	}
-	return 0, false
-}
 
 is_string_picked :: proc(finger: u8) -> bool {
 	return finger > 0
@@ -234,24 +215,6 @@ find_fingerings_for_chord :: proc(
 
 
 main :: proc() {
-	for note in NoteKind {
-		major_scale := make_scale(note, major_scale_steps)
-		fmt.println(note, major_scale)
-
-		minor_scale := make_scale(note, minor_scale_steps)
-		fmt.println(note, minor_scale)
-
-		fmt.println(note, make_chord(major_scale, major_chord))
-		fmt.println(note, make_chord(major_scale, major_chord_7))
-		fmt.println(note, make_chord(minor_scale, major_chord))
-		fmt.println(note, make_chord(minor_scale, major_chord_7))
-		fmt.println()
-	}
-
-
-	fmt.println(find_fret_for_note_on_string(.F, 2, BANJO_LAYOUT[1]))
-	fmt.println(find_fret_for_note_on_string(.A_Sharp, 0, BANJO_LAYOUT[0]))
-
 	c_major_scale := make_scale(.C, major_scale_steps)
 	c_major_chord := make_chord(c_major_scale, major_chord)
 	c_major_chord_slice := small_array.slice(&c_major_chord)
