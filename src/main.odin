@@ -239,7 +239,7 @@ find_all_fingerings_for_chord :: proc(
 	res: [dynamic][]StringState
 	fingering := Fingering{}
 	for _ in instrument_layout {
-		small_array.append(&fingering, StringStateOpen{})
+		small_array.append(&fingering, StringStateMuted{})
 	}
 	assert(len(instrument_layout) == small_array.len(fingering))
 	fingering_slice := small_array.slice(&fingering)
