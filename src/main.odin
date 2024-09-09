@@ -226,6 +226,15 @@ next_fingering :: proc(
 	return false
 }
 
+count_muted_strings_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
+	for string_state in fingering {
+		if _, muted := string_state.(StringStateMuted); muted {
+			count += 1
+		}
+	}
+	return
+}
+
 // Rules:
 // - Each string is either muted, open, or picked by one finger and produces 0 (muted) or 1 (otherwise) note .
 // - The maximum distance between all picked frets is 4 or 5 due to the physical length of fingers.
@@ -325,6 +334,8 @@ main :: proc() {
 				note, muted := make_note_for_string_state(finger, string_layout)
 				if muted {
 					fmt.print("x  | ")
+				} else if _, open := finger.(StringStateOpen); open {
+					fmt.print("o", note, " | ")
 				} else {
 					fmt.print(finger, note, " | ")
 				}
