@@ -3,6 +3,7 @@ package main
 import "core:container/small_array"
 import "core:fmt"
 import "core:slice"
+import "core:strconv"
 import "core:testing"
 
 
@@ -83,7 +84,12 @@ make_scale :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
 
 ChordKind :: []u8
 major_chord :: ChordKind{1, 3, 5}
+major_chord_5 :: ChordKind{1, 5}
+major_chord_6 :: ChordKind{1, 3, 5, 6}
 major_chord_7 :: ChordKind{1, 3, 5, 7}
+major_chord_9 :: ChordKind{1, 3, 5, 7, 9}
+major_chord_11 :: ChordKind{1, 3, 5, 7, 9, 11}
+major_chord_13 :: ChordKind{1, 3, 5, 7, 9, 11, 13}
 
 Chord :: small_array.Small_Array(10, NoteKind)
 
@@ -333,6 +339,79 @@ print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstr
 		}
 	}
 	fmt.print("\n")
+}
+
+parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
+	chord_slice := transmute([]u8)chord
+	base_note_char, rest := slice.split_first(chord_slice)
+
+	sharp: bool
+	if len(rest) > 0 && slice.first(rest) == '#' {
+		_, rest = slice.split_first(rest)
+		sharp = true
+	}
+
+	base_note := NoteKind.A
+	switch base_note_char {
+	case 'A':
+		base_note = .A_Sharp if sharp else .A
+	case 'B':
+		if sharp {return {}, false}
+		base_note = .B
+	case 'C':
+		base_note = .C_Sharp if sharp else .C
+	case 'D':
+		base_note = .D_Sharp if sharp else .D
+	case 'E':
+		if sharp {return {}, false}
+		base_note = .E
+	case 'F':
+		base_note = .F_Sharp if sharp else .F
+	case 'G':
+		base_note = .G_Sharp if sharp else .G
+	case:
+		return {}, false
+	}
+
+	minor: bool
+	if len(rest) > 0 && slice.first(rest) == 'm' {
+		_, rest = slice.split_first(rest)
+		minor = true
+	}
+
+
+	// TODO: maj, sus, add ...
+
+
+	level: u64
+	if len(rest) > 0 {
+		level = strconv.parse_u64(transmute(string)rest) or_return
+	}
+
+	if level < 5 {return {}, false}
+
+	// TODO: /9, ...
+
+	steps := minor_scale_steps if minor else major_scale_steps
+	scale := make_scale(base_note, steps)
+
+	// TODO: minor
+	switch level {
+	case 5:
+		return make_chord(scale, major_chord_5), true
+	case 6:
+		return make_chord(scale, major_chord_6), true
+	case 7:
+		return make_chord(scale, major_chord_7), true
+	case 9:
+		return make_chord(scale, major_chord_9), true
+	case 11:
+		return make_chord(scale, major_chord_11), true
+	case 13:
+		return make_chord(scale, major_chord_13), true
+	case:
+		return {}, false
+	}
 }
 
 main :: proc() {
