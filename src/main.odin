@@ -316,6 +316,25 @@ make_note_for_string_state :: proc(
 	unreachable()
 }
 
+print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstrumentLayout) {
+	for string_state, i in fingering {
+		string_layout := instrument_layout[i]
+		note, muted := make_note_for_string_state(string_state, string_layout)
+		if muted {
+			fmt.print("x")
+		} else if _, open := string_state.(StringStateOpen); open {
+			fmt.print("o", note)
+		} else {
+			fmt.print(string_state, note)
+		}
+
+		if i < len(fingering) - 1 {
+			fmt.print(" | ")
+		}
+	}
+	fmt.print("\n")
+}
+
 main :: proc() {
 	// {
 	// 	c_major_scale := make_scale(.C, major_scale_steps)
@@ -356,18 +375,7 @@ main :: proc() {
 
 		fmt.println("[D001]", len(g_major_chord_fingerings))
 		for fingering in g_major_chord_fingerings {
-			fmt.print("\n")
-			for finger, i in fingering {
-				string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[i]
-				note, muted := make_note_for_string_state(finger, string_layout)
-				if muted {
-					fmt.print("x  | ")
-				} else if _, open := finger.(StringStateOpen); open {
-					fmt.print("o", note, " | ")
-				} else {
-					fmt.print(finger, note, " | ")
-				}
-			}
+			print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
 		}
 	}
 	// fmt.println("\n---------- GUITAR ----------")
