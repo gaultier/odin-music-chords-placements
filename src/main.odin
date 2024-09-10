@@ -719,13 +719,29 @@ test_make_note_for_string_state :: proc(_: ^testing.T) {
 @(test)
 test_parse_chord :: proc(_: ^testing.T) {
 	{
-		a, ok := parse_chord("A")
+		chord, ok := parse_chord("A")
 		assert(ok)
-		fmt.println(small_array.slice(&a))
-		assert(slice.equal(small_array.slice(&a), []NoteKind{.A, .C_Sharp, .E}))
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.A, .C_Sharp, .E}))
 	}
 	{
-		a, ok := parse_chord("A1")
+		_, ok := parse_chord("A1")
 		assert(!ok)
+	}
+	{
+		chord, ok := parse_chord("C5")
+		assert(ok)
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.C, .G}))
+	}
+	{
+		_, ok := parse_chord("G8")
+		assert(!ok)
+	}
+	{
+		chord, ok := parse_chord("F#")
+		assert(ok)
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .A_Sharp, .C_Sharp}))
 	}
 }
