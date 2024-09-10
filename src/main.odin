@@ -744,4 +744,10 @@ test_parse_chord :: proc(_: ^testing.T) {
 		fmt.println(small_array.slice(&chord))
 		assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .A_Sharp, .C_Sharp}))
 	}
+	{
+		chord, ok := parse_chord("F#5")
+		assert(ok)
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .C_Sharp}))
+	}
 }
