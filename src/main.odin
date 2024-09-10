@@ -152,9 +152,7 @@ is_fingering_valid_for_chord :: proc(
 		if at_least_one_string_picked {
 			dist_squared := (finger_start - finger_end) * (finger_start - finger_end)
 
-			if dist_squared >= MAX_FINGER_DISTANCE * MAX_FINGER_DISTANCE {
-				return false
-			}
+			if dist_squared >= MAX_FINGER_DISTANCE * MAX_FINGER_DISTANCE {return false}
 		}
 	}
 
@@ -166,9 +164,7 @@ is_fingering_valid_for_chord :: proc(
 			// If the string is muted, it cannot invalidate the chord.
 			if muted {continue}
 
-			if !slice.contains(chord, note) {
-				return false
-			}
+			if !slice.contains(chord, note) {return false}
 		}
 	}
 
@@ -244,7 +240,6 @@ find_all_fingerings_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
 ) -> [][]StringState {
-
 	res: [dynamic][]StringState
 	fingering := Fingering{}
 	for _ in instrument_layout {
@@ -261,9 +256,7 @@ find_all_fingerings_for_chord :: proc(
 		) {continue}
 
 		clone, err := slice.clone(small_array.slice(&fingering))
-		if err != nil {
-			panic("clone failed")
-		}
+		if err != nil {panic("clone failed")}
 
 		append(&res, clone)
 	}
