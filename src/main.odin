@@ -266,7 +266,6 @@ find_all_fingerings_for_chord :: proc(
 		}
 
 		append(&res, clone)
-
 	}
 
 	return res[:]
