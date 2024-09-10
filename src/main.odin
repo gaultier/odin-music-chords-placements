@@ -384,16 +384,22 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 
 
 	level: u64
+	level_present: bool
 	if len(rest) > 0 {
 		level = strconv.parse_u64(transmute(string)rest) or_return
+		level_present = true
 	}
 
-	if level < 5 {return {}, false}
+	if level_present && level < 5 {return {}, false}
 
 	// TODO: /9, ...
 
 	steps := minor_scale_steps if minor else major_scale_steps
 	scale := make_scale(base_note, steps)
+
+	if !level_present {
+		return make_chord(scale, major_chord), true
+	}
 
 	// TODO: minor
 	switch level {
@@ -707,5 +713,19 @@ test_make_note_for_string_state :: proc(_: ^testing.T) {
 		note, muted := make_note_for_string_state(u8(2), string_layout)
 		assert(!muted)
 		assert(note == .A)
+	}
+}
+
+@(test)
+test_parse_chord :: proc(_: ^testing.T) {
+	{
+		a, ok := parse_chord("A")
+		assert(ok)
+		fmt.println(small_array.slice(&a))
+		assert(slice.equal(small_array.slice(&a), []NoteKind{.A, .C_Sharp, .E}))
+	}
+	{
+		a, ok := parse_chord("A1")
+		assert(!ok)
 	}
 }
