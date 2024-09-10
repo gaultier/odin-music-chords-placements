@@ -231,6 +231,35 @@ count_muted_strings_in_fingering :: proc(fingering: []StringState) -> (count: u8
 	return
 }
 
+count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
+	for string_state in fingering {
+		#partial switch v in string_state {
+		case StringStateOpen:
+			count += 1
+		case u8:
+			count += 1
+		}
+	}
+	return
+}
+
+count_open_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
+	for string_state in fingering {
+		#partial switch v in string_state {
+		case StringStateOpen:
+			count += 1
+		}
+	}
+	return
+}
+
+// Order by open notes desc.
+order_fingering_by_ease :: proc(a: []StringState, b: []StringState) -> bool {
+	a_count := count_open_notes_in_fingering(a)
+	b_count := count_open_notes_in_fingering(b)
+	return b_count < a_count
+}
+
 // Rules:
 // - Each string is either muted, open, or picked by one finger and produces 0 (muted) or 1 (otherwise) note .
 // - The maximum distance between all picked frets is 4 or 5 due to the physical length of fingers.
@@ -239,6 +268,7 @@ count_muted_strings_in_fingering :: proc(fingering: []StringState) -> (count: u8
 find_all_fingerings_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
+	note_count_at_least: u8,
 ) -> [][]StringState {
 	res: [dynamic][]StringState
 	fingering := Fingering{}
@@ -254,6 +284,8 @@ find_all_fingerings_for_chord :: proc(
 			instrument_layout,
 			small_array.slice(&fingering),
 		) {continue}
+
+		if count_notes_in_fingering(fingering_slice) < note_count_at_least {continue}
 
 		clone, err := slice.clone(small_array.slice(&fingering))
 		if err != nil {panic("clone failed")}
@@ -316,9 +348,13 @@ main :: proc() {
 		g_major_chord_fingerings := find_all_fingerings_for_chord(
 			g_major_chord_slice,
 			BANJO_LAYOUT_STANDARD_5_STRINGS,
+			3,
 		)
 		defer delete(g_major_chord_fingerings)
 
+		slice.sort_by(g_major_chord_fingerings, order_fingering_by_ease)
+
+		fmt.println("[D001]", len(g_major_chord_fingerings))
 		for fingering in g_major_chord_fingerings {
 			fmt.print("\n")
 			for finger, i in fingering {
