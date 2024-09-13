@@ -192,20 +192,25 @@ increment_string_state :: proc(
 	// Muted (nil) -> Open (0) -> Picked(first_fret) -> ... -> Picked(last_fret) -> Muted
 
 	fret, ok := string_state.?
+
+	// Muted -> Open (0)
 	if !ok {
 		string_state^ = 0
 		return true
 	}
+
+	// Open(0) -> Picked(first_fret)
 	if fret == 0 {
 		string_state^ = string_layout.first_fret
 		return true
 	}
 
-	if fret == string_layout.last_fret {
+
+	if fret == string_layout.last_fret { 	// Picked(last_fret) -> Muted
 		string_state^ = nil
 		// Terminal state.
 		return false
-	} else {
+	} else { 	// Picked(N) -> Picked(N+1)
 		string_state^ = fret + 1
 		return true
 	}
@@ -227,21 +232,11 @@ next_fingering :: proc(
 
 		if keep_going {return true}
 
-		// The slot has reached the maximum value, need to inspect the left-hand part to increment it.
+		// The slot has reached the maximum value, need to inspect the left-hand part to increment it, in the next loop iteration.
 	}
 
 	// Reached the end.
 	return false
-}
-
-@(require_results)
-count_muted_strings_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
-	for string_state in fingering {
-		if _, ok := string_state.?; !ok {
-			count += 1
-		}
-	}
-	return
 }
 
 @(require_results)
