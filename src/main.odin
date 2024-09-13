@@ -310,25 +310,25 @@ make_note_for_string_state :: proc(
 	string_layout: StringLayout,
 ) -> (
 	note: NoteKind,
-	muted: bool,
+	ok: bool,
 ) {
-	fret, ok := string_state.?
-	if !ok {
-		return NoteKind{}, true
-	}
+	fret := string_state.? or_return
+
 	if fret == 0 {
-		return string_layout.open_note, false
+		return string_layout.open_note, true
 	}
-	return note_add(string_layout.open_note, fret), false
+	return note_add(string_layout.open_note, fret), true
 }
 
 print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstrumentLayout) {
 	for string_state, i in fingering {
 		string_layout := instrument_layout[i]
-		note, muted := make_note_for_string_state(string_state, string_layout)
-		if muted {
+		note, _ := make_note_for_string_state(string_state, string_layout)
+
+		fret, ok := string_state.?
+		if !ok {
 			fmt.print("x")
-		} else if fret, ok := string_state.?; ok && fret == 0 {
+		} else if ok && fret == 0 {
 			fmt.print("o", note)
 		} else {
 			fmt.print(string_state, note)
@@ -694,17 +694,17 @@ test_increment_string_state :: proc(_: ^testing.T) {
 test_make_note_for_string_state :: proc(_: ^testing.T) {
 	string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[0]
 	{
-		_, muted := make_note_for_string_state(nil, string_layout)
-		assert(muted)
+		_, ok := make_note_for_string_state(nil, string_layout)
+		assert(!ok)
 	}
 	{
-		note, muted := make_note_for_string_state(0, string_layout)
-		assert(!muted)
+		note, ok := make_note_for_string_state(0, string_layout)
+		assert(ok)
 		assert(note == string_layout.open_note)
 	}
 	{
-		note, muted := make_note_for_string_state(u8(2), string_layout)
-		assert(!muted)
+		note, ok := make_note_for_string_state(u8(2), string_layout)
+		assert(ok)
 		assert(note == .A)
 	}
 }
