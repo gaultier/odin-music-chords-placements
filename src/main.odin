@@ -188,6 +188,8 @@ increment_string_state :: proc(
 ) -> (
 	keep_going: bool,
 ) {
+	// The state machine is:
+	// Muted (nil) -> Open (0) -> Picked(first_fret) -> ... -> Picked(last_fret) -> Muted
 
 	fret, ok := string_state.?
 	if !ok {
