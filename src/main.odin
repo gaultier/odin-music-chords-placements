@@ -96,6 +96,9 @@ chord_kind_13 :: ChordKind{1, 3, 5, 7, 9, 11, 13}
 
 Chord :: small_array.Small_Array(10, NoteKind)
 
+// nil: muted.
+// 0: open
+// N where N > 0: picked on fret N.
 StringState :: Maybe(u8)
 
 MAX_STRINGS_SUPPORTED :: 10
