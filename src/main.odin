@@ -169,7 +169,7 @@ is_fingering_valid_for_chord :: proc(
 
 	// Check that the fingering abides by the chord.
 	{
-		for &finger, string_i in fingering {
+		for finger, string_i in fingering {
 			string_layout := instrument_layout[string_i]
 			note, muted := make_note_for_string_state(finger, string_layout)
 			// If the string is muted, it cannot invalidate the chord.
