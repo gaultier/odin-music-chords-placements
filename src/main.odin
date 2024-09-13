@@ -372,10 +372,10 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 		return {}, false
 	}
 
-	minor: bool
+	is_minor: bool
 	if len(rest) > 0 && slice.first(rest) == 'm' {
 		_, rest = slice.split_first(rest)
-		minor = true
+		is_minor = true
 	}
 
 
@@ -383,20 +383,20 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 
 
 	level: u64
-	level_present: bool
+	is_level_present: bool
 	if len(rest) > 0 {
 		level = strconv.parse_u64(transmute(string)rest) or_return
-		level_present = true
+		is_level_present = true
 	}
 
-	if level_present && level < 5 {return {}, false}
+	if is_level_present && level < 5 {return {}, false}
 
 	// TODO: /9, ...
 
-	steps := minor_scale_steps if minor else major_scale_steps
+	steps := minor_scale_steps if is_minor else major_scale_steps
 	scale := make_scale(base_note, steps)
 
-	if !level_present {
+	if !is_level_present {
 		return make_chord(scale, chord_kind_standard), true
 	}
 
@@ -411,14 +411,14 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 		return make_chord(scale, chord_kind_9), true
 	case 11:
 		res = make_chord(scale, chord_kind_11)
-		if !minor {
+		if !is_minor {
 			// In case of a major, raise the 11th by a semi-tone to avoid dissonance.
 			res.data[small_array.len(res) - 1] = note_add(res.data[small_array.len(res) - 1], 1)
 		}
 		return res, true
 	case 13:
 		res = make_chord(scale, chord_kind_13)
-		if minor {
+		if is_minor {
 			// In case of a minor, raise the 13th by a semi-tone to avoid dissonance.
 			res.data[small_array.len(res) - 1] = note_add(res.data[small_array.len(res) - 1], 1)
 		}
