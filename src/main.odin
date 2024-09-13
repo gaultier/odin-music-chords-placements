@@ -38,6 +38,7 @@ minor_scale_steps :: ScaleKind{.Whole, .Half, .Whole, .Whole, .Half, .Whole, .Wh
 Scale :: [7]NoteKind
 
 
+// FIXME: last_fret
 BANJO_LAYOUT_STANDARD_5_STRINGS := StringInstrumentLayout {
 	{open_note = .G, first_fret = 5, last_fret = 17},
 	{open_note = .D, first_fret = 1, last_fret = 12},
@@ -46,6 +47,7 @@ BANJO_LAYOUT_STANDARD_5_STRINGS := StringInstrumentLayout {
 	{open_note = .D, first_fret = 1, last_fret = 12},
 }
 
+// FIXME: last_fret
 GUITAR_LAYOUT_STANDARD_6_STRING := StringInstrumentLayout {
 	{open_note = .E, first_fret = 1, last_fret = 12},
 	{open_note = .A, first_fret = 1, last_fret = 12},
