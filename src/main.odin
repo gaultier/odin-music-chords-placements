@@ -242,9 +242,8 @@ next_fingering :: proc(
 @(require_results)
 count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
-		if _, ok := string_state.?; ok {
-			count += 1
-		}
+		_, ok := string_state.?
+		count += ok == true
 	}
 	return
 }
