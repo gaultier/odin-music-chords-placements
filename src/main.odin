@@ -61,14 +61,17 @@ GUITAR_LAYOUT_STANDARD_6_STRING := StringInstrumentLayout {
 // Maximum distance between the two most remote fingers.
 MAX_FINGER_DISTANCE :: 4
 
+@(require_results)
 note_add :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
 	return cast(NoteKind)((cast(u8)note_kind + offset) % 12)
 }
 
+@(require_results)
 next_note_kind :: proc(note_kind: NoteKind, step: Step) -> NoteKind {
 	return note_add(note_kind, cast(u8)step)
 }
 
+@(require_results)
 make_scale :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
 	res := Scale{}
 	res[0] = note_kind
@@ -103,6 +106,7 @@ StringState :: union {
 MAX_STRINGS_SUPPORTED :: 10
 Fingering :: small_array.Small_Array(MAX_STRINGS_SUPPORTED, StringState)
 
+@(require_results)
 make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 	res := Chord{}
 
@@ -122,6 +126,7 @@ StringLayout :: struct {
 
 StringInstrumentLayout :: []StringLayout
 
+@(require_results)
 fingering_min_max :: proc(
 	fingering: []StringState,
 ) -> (
@@ -145,6 +150,7 @@ fingering_min_max :: proc(
 }
 
 
+@(require_results)
 is_fingering_valid_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
@@ -230,6 +236,7 @@ next_fingering :: proc(
 	return false
 }
 
+@(require_results)
 count_muted_strings_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
 		if _, muted := string_state.(StringStateMuted); muted {
@@ -239,6 +246,7 @@ count_muted_strings_in_fingering :: proc(fingering: []StringState) -> (count: u8
 	return
 }
 
+@(require_results)
 count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
 		#partial switch v in string_state {
@@ -251,6 +259,7 @@ count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	return
 }
 
+@(require_results)
 count_open_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
 		#partial switch v in string_state {
@@ -262,6 +271,7 @@ count_open_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 }
 
 // Order by open notes desc.
+@(require_results)
 order_fingering_by_ease :: proc(a: []StringState, b: []StringState) -> bool {
 	a_count := count_open_notes_in_fingering(a)
 	b_count := count_open_notes_in_fingering(b)
@@ -273,6 +283,7 @@ order_fingering_by_ease :: proc(a: []StringState, b: []StringState) -> bool {
 // - The maximum distance between all picked frets is 4 or 5 due to the physical length of fingers.
 // - Every fret of every string gets considered
 // TODO: muted strings.
+@(require_results)
 find_all_fingerings_for_chord :: proc(
 	chord: []NoteKind,
 	instrument_layout: StringInstrumentLayout,
@@ -305,6 +316,7 @@ find_all_fingerings_for_chord :: proc(
 }
 
 
+@(require_results)
 make_note_for_string_state :: proc(
 	string_state: StringState,
 	string_layout: StringLayout,
@@ -343,6 +355,7 @@ print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstr
 	fmt.print("\n")
 }
 
+@(require_results)
 parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 	chord_slice := transmute([]u8)chord
 	base_note_char, rest := slice.split_first(chord_slice)
