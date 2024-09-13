@@ -71,9 +71,9 @@ next_note_kind :: proc(note_kind: NoteKind, step: Step) -> NoteKind {
 }
 
 @(require_results)
-make_scale :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
+make_scale :: proc(base_note: NoteKind, scale: ScaleKind) -> Scale {
 	res := Scale{}
-	res[0] = note_kind
+	res[0] = base_note
 
 	for i := 1; i < len(res); i += 1 {
 		res[i] = next_note_kind(res[i - 1], scale[i - 1])
