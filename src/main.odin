@@ -41,10 +41,10 @@ Scale :: [7]NoteKind
 // FIXME: last_fret
 BANJO_LAYOUT_STANDARD_5_STRINGS := StringInstrumentLayout {
 	{open_note = .G, first_fret = 5, last_fret = 17},
-	{open_note = .D, first_fret = 1, last_fret = 12},
-	{open_note = .G, first_fret = 1, last_fret = 12},
-	{open_note = .B, first_fret = 1, last_fret = 12},
-	{open_note = .D, first_fret = 1, last_fret = 12},
+	{open_note = .D, first_fret = 1, last_fret = 17},
+	{open_note = .G, first_fret = 1, last_fret = 17},
+	{open_note = .B, first_fret = 1, last_fret = 17},
+	{open_note = .D, first_fret = 1, last_fret = 17},
 }
 
 // FIXME: last_fret
@@ -435,7 +435,7 @@ find_all_fingerings_json_for_chord_str :: proc(chord_str: string) -> []u8 {
 	fingerings := find_all_fingerings_for_chord(
 		small_array.slice(&chord),
 		BANJO_LAYOUT_STANDARD_5_STRINGS,
-		3,
+		2,
 	)
 	defer delete(fingerings)
 
