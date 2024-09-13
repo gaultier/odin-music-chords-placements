@@ -86,6 +86,7 @@ make_scale :: proc(base_note: NoteKind, scale: ScaleKind) -> Scale {
 }
 
 ChordKind :: []u8
+// 1-indexed to follow the music theory material.
 chord_kind_standard :: ChordKind{1, 3, 5}
 chord_kind_5 :: ChordKind{1, 5}
 chord_kind_6 :: ChordKind{1, 3, 5, 6}
@@ -109,6 +110,8 @@ make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 	res := Chord{}
 
 	for pos in chord_kind {
+		// `pos` is 1-indexed so we have to make it zero-index.
+		// We could go beyond the scale e.g. 9th, 11th, 13th, etc so we loop around with `%`.
 		pos := pos - 1 if pos <= 8 else pos
 		i := pos % 8
 		small_array.push(&res, scale[i])
@@ -136,11 +139,11 @@ fingering_min_max :: proc(
 		fret, ok := finger.?
 		if !ok {continue}
 		if fret == 0 {continue}
-		at_least_one_string_picked = true
+
 		if fret < min {min = fret}
 		if fret > max {max = fret}
 	}
-	return min, max, at_least_one_string_picked
+	return min, max, max > 0
 }
 
 
