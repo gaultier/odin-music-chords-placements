@@ -329,7 +329,7 @@ print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstr
 		if !ok {
 			fmt.print("x")
 		} else {
-			fmt.print(string_state, note)
+			fmt.print(fret, note)
 		}
 
 		if i < len(fingering) - 1 {
