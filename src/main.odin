@@ -107,7 +107,8 @@ make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 	res := Chord{}
 
 	for pos in chord_kind {
-		i := (pos - 1) % 8
+		pos := pos - 1 if pos <= 8 else pos
+		i := pos % 8
 		small_array.push(&res, scale[i])
 	}
 	return res
@@ -402,7 +403,6 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 		return make_chord(scale, chord_kind_standard), true
 	}
 
-	// TODO: minor
 	switch level {
 	case 5:
 		return make_chord(scale, chord_kind_5), true
@@ -413,9 +413,19 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 	case 9:
 		return make_chord(scale, chord_kind_9), true
 	case 11:
-		return make_chord(scale, chord_kind_11), true
+		res := make_chord(scale, chord_kind_11)
+		if !minor {
+			// In case of a major, raise the 11th by a semi-tone to avoid dissonance.
+			res.data[small_array.len(res) - 1] = note_add(res.data[small_array.len(res) - 1], 1)
+		}
+		return res, true
 	case 13:
-		return make_chord(scale, chord_kind_13), true
+		res := make_chord(scale, chord_kind_13)
+		if minor {
+			// In case of a minor, raise the 13th by a semi-tone to avoid dissonance.
+			res.data[small_array.len(res) - 1] = note_add(res.data[small_array.len(res) - 1], 1)
+		}
+		return res, true
 	case:
 		return {}, false
 	}
