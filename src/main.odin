@@ -80,6 +80,7 @@ make_scale :: proc(base_note: NoteKind, scale: ScaleKind) -> Scale {
 	}
 
 	assert(next_note_kind(res[len(res) - 1], scale[len(scale) - 1]) == res[0])
+	assert(base_note == res[0])
 
 	return res
 }
