@@ -24,11 +24,7 @@ NoteKind :: enum {
 }
 #assert(cast(u8)NoteKind.G_Sharp == 11)
 
-// Note :: struct {
-// 	kind:  NoteKind,
-// 	level: u8,
-// }
-
+// Count in semi-tones.
 Step :: enum {
 	Half  = 1,
 	Whole = 2,
