@@ -131,8 +131,8 @@ StringInstrumentLayout :: []StringLayout
 fingering_min_max :: proc(
 	fingering: []StringState,
 ) -> (
-	min: u8,
-	max: u8,
+	res_min: u8,
+	res_max: u8,
 	at_least_one_string_picked: bool,
 ) {
 	for finger in fingering {
@@ -140,10 +140,10 @@ fingering_min_max :: proc(
 		if !ok {continue}
 		if fret == 0 {continue}
 
-		if fret < min {min = fret}
-		if fret > max {max = fret}
+		res_min = min(res_min, fret)
+		res_max = max(res_max, fret)
 	}
-	return min, max, max > 0
+	return res_min, res_max, res_max > 0
 }
 
 
@@ -451,6 +451,7 @@ find_all_fingerings_json_for_chord_str :: proc(chord_str: string) -> []u8 {
 }
 
 main :: proc() {
+
 	// fmt.println("---------- Banjo C ----------")
 	// {
 	// 	c_major_scale := make_scale(.C, major_scale_steps)
