@@ -1,6 +1,7 @@
 package main
 
 import "core:container/small_array"
+import "core:encoding/json"
 import "core:fmt"
 import "core:slice"
 import "core:strconv"
@@ -96,13 +97,8 @@ chord_kind_13 :: ChordKind{1, 3, 5, 7, 9, 11, 13}
 
 Chord :: small_array.Small_Array(10, NoteKind)
 
-StringStateOpen :: struct {}
-StringStateMuted :: struct {}
-StringState :: union {
-	StringStateOpen,
-	StringStateMuted,
-	u8,
-}
+StringState :: Maybe(u8)
+
 MAX_STRINGS_SUPPORTED :: 10
 Fingering :: small_array.Small_Array(MAX_STRINGS_SUPPORTED, StringState)
 
@@ -135,16 +131,12 @@ fingering_min_max :: proc(
 	at_least_one_string_picked: bool,
 ) {
 	for finger in fingering {
-		switch v in finger {
-		case StringStateMuted:
-			continue
-		case StringStateOpen:
-			continue
-		case u8:
-			at_least_one_string_picked = true
-			if v < min {min = v}
-			if v > max {max = v}
-		}
+		fret, ok := finger.?
+		if !ok {continue}
+		if fret == 0 {continue}
+		at_least_one_string_picked = true
+		if fret < min {min = fret}
+		if fret > max {max = fret}
 	}
 	return min, max, at_least_one_string_picked
 }
@@ -191,26 +183,25 @@ increment_string_state :: proc(
 ) -> (
 	keep_going: bool,
 ) {
-	switch v in string_state^ {
-	case StringStateMuted:
-		string_state^ = StringStateOpen{}
-		return true
 
-	case StringStateOpen:
+	fret, ok := string_state.?
+	if !ok {
+		string_state^ = 0
+		return true
+	}
+	if fret == 0 {
 		string_state^ = string_layout.first_fret
 		return true
-
-	case u8:
-		if v == string_layout.last_fret {
-			string_state^ = StringStateMuted{}
-			// Terminal state.
-			return false
-		} else {
-			string_state^ = v + 1
-			return true
-		}
 	}
-	unreachable()
+
+	if fret == string_layout.last_fret {
+		string_state^ = nil
+		// Terminal state.
+		return false
+	} else {
+		string_state^ = fret + 1
+		return true
+	}
 }
 
 next_fingering :: proc(
@@ -239,7 +230,7 @@ next_fingering :: proc(
 @(require_results)
 count_muted_strings_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
-		if _, muted := string_state.(StringStateMuted); muted {
+		if _, ok := string_state.?; !ok {
 			count += 1
 		}
 	}
@@ -249,10 +240,7 @@ count_muted_strings_in_fingering :: proc(fingering: []StringState) -> (count: u8
 @(require_results)
 count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
-		#partial switch v in string_state {
-		case StringStateOpen:
-			count += 1
-		case u8:
+		if _, ok := string_state.?; ok {
 			count += 1
 		}
 	}
@@ -262,8 +250,8 @@ count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 @(require_results)
 count_open_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
-		#partial switch v in string_state {
-		case StringStateOpen:
+		fret, ok := string_state.?
+		if ok && fret == 0 {
 			count += 1
 		}
 	}
@@ -292,7 +280,7 @@ find_all_fingerings_for_chord :: proc(
 	res: [dynamic][]StringState
 	fingering := Fingering{}
 	for _ in instrument_layout {
-		small_array.append(&fingering, StringStateMuted{})
+		small_array.append(&fingering, nil)
 	}
 	assert(len(instrument_layout) == small_array.len(fingering))
 	fingering_slice := small_array.slice(&fingering)
@@ -324,16 +312,14 @@ make_note_for_string_state :: proc(
 	note: NoteKind,
 	muted: bool,
 ) {
-	switch v in string_state {
-	case StringStateMuted:
+	fret, ok := string_state.?
+	if !ok {
 		return NoteKind{}, true
-	case StringStateOpen:
-		return string_layout.open_note, false
-	case u8:
-		return note_add(string_layout.open_note, v), false
 	}
-
-	unreachable()
+	if fret == 0 {
+		return string_layout.open_note, false
+	}
+	return note_add(string_layout.open_note, fret), false
 }
 
 print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstrumentLayout) {
@@ -342,7 +328,7 @@ print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstr
 		note, muted := make_note_for_string_state(string_state, string_layout)
 		if muted {
 			fmt.print("x")
-		} else if _, open := string_state.(StringStateOpen); open {
+		} else if fret, ok := string_state.?; ok && fret == 0 {
 			fmt.print("o", note)
 		} else {
 			fmt.print(string_state, note)
@@ -444,64 +430,83 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 	}
 }
 
+find_all_fingerings_json_for_chord_str :: proc(chord_str: string) -> []u8 {
+	chord, ok := parse_chord("Cm13")
+	if !ok {return {}}
+
+	fingerings := find_all_fingerings_for_chord(
+		small_array.slice(&chord),
+		BANJO_LAYOUT_STANDARD_5_STRINGS,
+		3,
+	)
+	defer delete(fingerings)
+
+	res, _ := json.marshal(fingerings)
+	return res
+}
+
 main :: proc() {
-	fmt.println("---------- Banjo C ----------")
-	{
-		c_major_scale := make_scale(.C, major_scale_steps)
-		c_chord_kind_standard := make_chord(c_major_scale, chord_kind_7)
-		c_chord_kind_standard_slice := small_array.slice(&c_chord_kind_standard)
-		fmt.println(c_chord_kind_standard_slice)
+	// fmt.println("---------- Banjo C ----------")
+	// {
+	// 	c_major_scale := make_scale(.C, major_scale_steps)
+	// 	c_chord_kind_standard := make_chord(c_major_scale, chord_kind_7)
+	// 	c_chord_kind_standard_slice := small_array.slice(&c_chord_kind_standard)
+	// 	fmt.println(c_chord_kind_standard_slice)
 
-		c_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
-			c_chord_kind_standard_slice,
-			BANJO_LAYOUT_STANDARD_5_STRINGS,
-			3,
-		)
-		defer delete(c_chord_kind_standard_fingerings)
+	// 	c_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
+	// 		c_chord_kind_standard_slice,
+	// 		BANJO_LAYOUT_STANDARD_5_STRINGS,
+	// 		3,
+	// 	)
+	// 	defer delete(c_chord_kind_standard_fingerings)
 
-		fmt.println(len(c_chord_kind_standard_fingerings))
-		for fingering in c_chord_kind_standard_fingerings {
-			print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
-		}
-	}
-	fmt.println("---------- Banjo G ----------")
-	{
-		g_major_scale := make_scale(.G, major_scale_steps)
-		g_chord_kind_standard := make_chord(g_major_scale, chord_kind_standard)
-		g_chord_kind_standard_slice := small_array.slice(&g_chord_kind_standard)
-		fmt.println(g_chord_kind_standard_slice)
-		g_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
-			g_chord_kind_standard_slice,
-			BANJO_LAYOUT_STANDARD_5_STRINGS,
-			3,
-		)
-		defer delete(g_chord_kind_standard_fingerings)
+	// 	fmt.println(len(c_chord_kind_standard_fingerings))
+	// 	for fingering in c_chord_kind_standard_fingerings {
+	// 		print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
+	// 	}
+	// }
+	// fmt.println("---------- Banjo G ----------")
+	// {
+	// 	g_major_scale := make_scale(.G, major_scale_steps)
+	// 	g_chord_kind_standard := make_chord(g_major_scale, chord_kind_standard)
+	// 	g_chord_kind_standard_slice := small_array.slice(&g_chord_kind_standard)
+	// 	fmt.println(g_chord_kind_standard_slice)
+	// 	g_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
+	// 		g_chord_kind_standard_slice,
+	// 		BANJO_LAYOUT_STANDARD_5_STRINGS,
+	// 		3,
+	// 	)
+	// 	defer delete(g_chord_kind_standard_fingerings)
 
-		slice.sort_by(g_chord_kind_standard_fingerings, order_fingering_by_ease)
+	// 	slice.sort_by(g_chord_kind_standard_fingerings, order_fingering_by_ease)
 
-		fmt.println(len(g_chord_kind_standard_fingerings))
-		for fingering in g_chord_kind_standard_fingerings {
-			print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
-		}
-	}
-	fmt.println("---------- GUITAR ----------")
-	{
-		g_major_scale := make_scale(.G, major_scale_steps)
-		g_chord_kind_standard := make_chord(g_major_scale, chord_kind_standard)
-		g_chord_kind_standard_slice := small_array.slice(&g_chord_kind_standard)
-		fmt.println(g_chord_kind_standard_slice)
-		g_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
-			g_chord_kind_standard_slice,
-			GUITAR_LAYOUT_STANDARD_6_STRING,
-			3,
-		)
-		defer delete(g_chord_kind_standard_fingerings)
+	// 	fmt.println(len(g_chord_kind_standard_fingerings))
+	// 	for fingering in g_chord_kind_standard_fingerings {
+	// 		print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
+	// 	}
+	// }
+	// fmt.println("---------- GUITAR ----------")
+	// {
+	// 	g_major_scale := make_scale(.G, major_scale_steps)
+	// 	g_chord_kind_standard := make_chord(g_major_scale, chord_kind_standard)
+	// 	g_chord_kind_standard_slice := small_array.slice(&g_chord_kind_standard)
+	// 	fmt.println(g_chord_kind_standard_slice)
+	// 	g_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
+	// 		g_chord_kind_standard_slice,
+	// 		GUITAR_LAYOUT_STANDARD_6_STRING,
+	// 		3,
+	// 	)
+	// 	defer delete(g_chord_kind_standard_fingerings)
 
-		fmt.println(len(g_chord_kind_standard_fingerings))
-		for fingering in g_chord_kind_standard_fingerings {
-			print_fingering(fingering, GUITAR_LAYOUT_STANDARD_6_STRING)
-		}
-	}
+	// 	fmt.println(len(g_chord_kind_standard_fingerings))
+	// 	for fingering in g_chord_kind_standard_fingerings {
+	// 		print_fingering(fingering, GUITAR_LAYOUT_STANDARD_6_STRING)
+	// 	}
+	// }
+
+	j := find_all_fingerings_json_for_chord_str("Am")
+	defer delete(j)
+	fmt.printf("%s", j)
 }
 
 @(test)
@@ -540,7 +545,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			is_fingering_valid_for_chord(
 				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
-				[]StringState{StringStateOpen{}, 2, StringStateOpen{}, 1, 2},
+				[]StringState{0, 2, 0, 1, 2},
 			),
 		)
 		// That's a C5 !
@@ -549,7 +554,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			is_fingering_valid_for_chord(
 				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
-				[]StringState{StringStateOpen{}, 2, 2, 1, 2},
+				[]StringState{0, 2, 2, 1, 2},
 			),
 		)
 	}
@@ -563,13 +568,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 			is_fingering_valid_for_chord(
 				small_array.slice(&g_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
-				[]StringState {
-					StringStateOpen{},
-					StringStateOpen{},
-					StringStateOpen{},
-					StringStateOpen{},
-					StringStateOpen{},
-				},
+				[]StringState{0, 0, 0, 0, 0},
 			),
 		)
 	}
@@ -586,7 +585,7 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 			is_fingering_valid_for_chord(
 				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
-				[]StringState{StringStateOpen{}, 2, 12, 1, 2},
+				[]StringState{0, 2, 12, 1, 2},
 			),
 		)
 	}
@@ -594,79 +593,48 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 
 @(test)
 test_next_fingering :: proc(_: ^testing.T) {
-	fingering := []StringState {
-		StringStateOpen{},
-		StringStateOpen{},
-		StringStateOpen{},
-		StringStateOpen{},
-		StringStateOpen{},
-	}
+	fingering := []StringState{0, 0, 0, 0, 0}
 
 	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
-	assert(
-		slice.equal(
-			[]StringState {
-				StringStateOpen{},
-				StringStateOpen{},
-				StringStateOpen{},
-				StringStateOpen{},
-				1,
-			},
-			fingering,
-		),
-	)
+	assert(slice.equal([]StringState{0, 0, 0, 0, 1}, fingering))
 
 	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
-	assert(
-		slice.equal(
-			[]StringState {
-				StringStateOpen{},
-				StringStateOpen{},
-				StringStateOpen{},
-				StringStateOpen{},
-				2,
-			},
-			fingering,
-		),
-	)
+	assert(slice.equal([]StringState{0, 0, 0, 0, 2}, fingering))
 
 
-	fingering = []StringState {
-		StringStateOpen{},
-		StringStateOpen{},
-		StringStateOpen{},
-		StringStateOpen{},
-		12,
-	}
+	fingering = []StringState{0, 0, 0, 0, 12}
 	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
-	v: u8
+
+	fret: u8
 	ok: bool
-	_, ok = fingering[0].(StringStateOpen)
-	assert(ok)
-	_, ok = fingering[1].(StringStateOpen)
-	assert(ok)
-	_, ok = fingering[2].(StringStateOpen)
-	assert(ok)
-	v, ok = fingering[3].(u8)
-	assert(ok)
-	assert(v == u8(1))
-	_, ok = fingering[4].(StringStateMuted)
-	assert(ok)
+	fret, ok = fingering[0].?
+	assert(ok && fret == 0)
+	fret, ok = fingering[1].?
+	assert(ok && fret == 0)
+	fret, ok = fingering[2].?
+	assert(ok && fret == 0)
 
-	fingering = []StringState{StringStateOpen{}, 12, 12, 12, 12}
+	fret, ok = fingering[3].?
+	assert(ok && fret == 1)
+
+	_, ok = fingering[4].?
+	assert(!ok)
+
+	fingering = []StringState{0, 12, 12, 12, 12}
 	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
 
-	v, ok = fingering[0].(u8)
+	fret, ok = fingering[0].?
 	assert(ok)
-	assert(v == u8(BANJO_LAYOUT_STANDARD_5_STRINGS[0].first_fret))
-	_, ok = fingering[1].(StringStateMuted)
-	assert(ok)
-	_, ok = fingering[2].(StringStateMuted)
-	assert(ok)
-	_, ok = fingering[3].(StringStateMuted)
-	assert(ok)
-	_, ok = fingering[4].(StringStateMuted)
-	assert(ok)
+	assert(fret == u8(BANJO_LAYOUT_STANDARD_5_STRINGS[0].first_fret))
+
+	_, ok = fingering[1].?
+	assert(!ok)
+	_, ok = fingering[2].?
+	assert(!ok)
+	_, ok = fingering[3].?
+	assert(!ok)
+	_, ok = fingering[4].?
+	assert(!ok)
 }
 
 @(test)
@@ -674,16 +642,16 @@ test_increment_string_state :: proc(_: ^testing.T) {
 	string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[0]
 
 	{
-		string_state: StringState = StringStateMuted{}
+		string_state: StringState = nil
 		keep_going := increment_string_state(&string_state, string_layout)
 		assert(keep_going)
-		_, ok := string_state.(StringStateOpen)
-		assert(ok)
+		fret, ok := string_state.?
+		assert(ok && fret == 0)
 	}
 
 
 	{
-		string_state: StringState = StringStateOpen{}
+		string_state: StringState = 0
 		keep_going := increment_string_state(&string_state, string_layout)
 		assert(keep_going)
 
@@ -716,8 +684,8 @@ test_increment_string_state :: proc(_: ^testing.T) {
 		keep_going := increment_string_state(&string_state, string_layout)
 		assert(!keep_going)
 
-		_, ok := string_state.(StringStateMuted)
-		assert(ok)
+		_, ok := string_state.?
+		assert(!ok)
 	}
 }
 
@@ -725,11 +693,11 @@ test_increment_string_state :: proc(_: ^testing.T) {
 test_make_note_for_string_state :: proc(_: ^testing.T) {
 	string_layout := BANJO_LAYOUT_STANDARD_5_STRINGS[0]
 	{
-		_, muted := make_note_for_string_state(StringStateMuted{}, string_layout)
+		_, muted := make_note_for_string_state(nil, string_layout)
 		assert(muted)
 	}
 	{
-		note, muted := make_note_for_string_state(StringStateOpen{}, string_layout)
+		note, muted := make_note_for_string_state(0, string_layout)
 		assert(!muted)
 		assert(note == string_layout.open_note)
 	}
