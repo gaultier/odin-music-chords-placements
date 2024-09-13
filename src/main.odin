@@ -729,45 +729,45 @@ test_make_note_for_string_state :: proc(_: ^testing.T) {
 
 @(test)
 test_parse_chord :: proc(_: ^testing.T) {
-	// {
-	// 	chord, ok := parse_chord("A")
-	// 	assert(ok)
-	// 	fmt.println(small_array.slice(&chord))
-	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.A, .C_Sharp, .E}))
-	// }
-	// {
-	// 	_, ok := parse_chord("A1")
-	// 	assert(!ok)
-	// }
-	// {
-	// 	chord, ok := parse_chord("C5")
-	// 	assert(ok)
-	// 	fmt.println(small_array.slice(&chord))
-	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.C, .G}))
-	// }
-	// {
-	// 	_, ok := parse_chord("G8")
-	// 	assert(!ok)
-	// }
-	// {
-	// 	chord, ok := parse_chord("F#")
-	// 	assert(ok)
-	// 	fmt.println(small_array.slice(&chord))
-	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .A_Sharp, .C_Sharp}))
-	// }
-	// {
-	// 	chord, ok := parse_chord("F#5")
-	// 	assert(ok)
-	// 	fmt.println(small_array.slice(&chord))
-	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .C_Sharp}))
-	// }
+	{
+		chord, ok := parse_chord("A")
+		assert(ok)
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.A, .C_Sharp, .E}))
+	}
+	{
+		_, ok := parse_chord("A1")
+		assert(!ok)
+	}
+	{
+		chord, ok := parse_chord("C5")
+		assert(ok)
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.C, .G}))
+	}
+	{
+		_, ok := parse_chord("G8")
+		assert(!ok)
+	}
+	{
+		chord, ok := parse_chord("F#")
+		assert(ok)
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .A_Sharp, .C_Sharp}))
+	}
+	{
+		chord, ok := parse_chord("F#5")
+		assert(ok)
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .C_Sharp}))
+	}
 
-	// {
-	// 	chord, ok := parse_chord("Am")
-	// 	assert(ok)
-	// 	fmt.println(small_array.slice(&chord))
-	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.A, .C, .E}))
-	// }
+	{
+		chord, ok := parse_chord("Am")
+		assert(ok)
+		fmt.println(small_array.slice(&chord))
+		assert(slice.equal(small_array.slice(&chord), []NoteKind{.A, .C, .E}))
+	}
 	{
 		chord, ok := parse_chord("Cm13")
 		assert(ok)
