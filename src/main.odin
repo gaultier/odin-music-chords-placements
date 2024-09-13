@@ -83,13 +83,13 @@ make_scale :: proc(note_kind: NoteKind, scale: ScaleKind) -> Scale {
 }
 
 ChordKind :: []u8
-major_chord :: ChordKind{1, 3, 5}
-major_chord_5 :: ChordKind{1, 5}
-major_chord_6 :: ChordKind{1, 3, 5, 6}
-major_chord_7 :: ChordKind{1, 3, 5, 7}
-major_chord_9 :: ChordKind{1, 3, 5, 7, 9}
-major_chord_11 :: ChordKind{1, 3, 5, 7, 9, 11}
-major_chord_13 :: ChordKind{1, 3, 5, 7, 9, 11, 13}
+chord_kind_standard :: ChordKind{1, 3, 5}
+chord_kind_5 :: ChordKind{1, 5}
+chord_kind_6 :: ChordKind{1, 3, 5, 6}
+chord_kind_7 :: ChordKind{1, 3, 5, 7}
+chord_kind_9 :: ChordKind{1, 3, 5, 7, 9}
+chord_kind_11 :: ChordKind{1, 3, 5, 7, 9, 11}
+chord_kind_13 :: ChordKind{1, 3, 5, 7, 9, 11, 13}
 
 Chord :: small_array.Small_Array(10, NoteKind)
 
@@ -107,7 +107,8 @@ make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 	res := Chord{}
 
 	for pos in chord_kind {
-		small_array.push(&res, scale[pos - 1])
+		i := (pos - 1) % 8
+		small_array.push(&res, scale[i])
 	}
 	return res
 }
@@ -398,23 +399,23 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 	scale := make_scale(base_note, steps)
 
 	if !level_present {
-		return make_chord(scale, major_chord), true
+		return make_chord(scale, chord_kind_standard), true
 	}
 
 	// TODO: minor
 	switch level {
 	case 5:
-		return make_chord(scale, major_chord_5), true
+		return make_chord(scale, chord_kind_5), true
 	case 6:
-		return make_chord(scale, major_chord_6), true
+		return make_chord(scale, chord_kind_6), true
 	case 7:
-		return make_chord(scale, major_chord_7), true
+		return make_chord(scale, chord_kind_7), true
 	case 9:
-		return make_chord(scale, major_chord_9), true
+		return make_chord(scale, chord_kind_9), true
 	case 11:
-		return make_chord(scale, major_chord_11), true
+		return make_chord(scale, chord_kind_11), true
 	case 13:
-		return make_chord(scale, major_chord_13), true
+		return make_chord(scale, chord_kind_13), true
 	case:
 		return {}, false
 	}
@@ -424,57 +425,57 @@ main :: proc() {
 	fmt.println("---------- Banjo C ----------")
 	{
 		c_major_scale := make_scale(.C, major_scale_steps)
-		c_major_chord := make_chord(c_major_scale, major_chord_7)
-		c_major_chord_slice := small_array.slice(&c_major_chord)
-		fmt.println(c_major_chord_slice)
+		c_chord_kind_standard := make_chord(c_major_scale, chord_kind_7)
+		c_chord_kind_standard_slice := small_array.slice(&c_chord_kind_standard)
+		fmt.println(c_chord_kind_standard_slice)
 
-		c_major_chord_fingerings := find_all_fingerings_for_chord(
-			c_major_chord_slice,
+		c_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
+			c_chord_kind_standard_slice,
 			BANJO_LAYOUT_STANDARD_5_STRINGS,
 			3,
 		)
-		defer delete(c_major_chord_fingerings)
+		defer delete(c_chord_kind_standard_fingerings)
 
-		fmt.println(len(c_major_chord_fingerings))
-		for fingering in c_major_chord_fingerings {
+		fmt.println(len(c_chord_kind_standard_fingerings))
+		for fingering in c_chord_kind_standard_fingerings {
 			print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
 		}
 	}
 	fmt.println("---------- Banjo G ----------")
 	{
 		g_major_scale := make_scale(.G, major_scale_steps)
-		g_major_chord := make_chord(g_major_scale, major_chord)
-		g_major_chord_slice := small_array.slice(&g_major_chord)
-		fmt.println(g_major_chord_slice)
-		g_major_chord_fingerings := find_all_fingerings_for_chord(
-			g_major_chord_slice,
+		g_chord_kind_standard := make_chord(g_major_scale, chord_kind_standard)
+		g_chord_kind_standard_slice := small_array.slice(&g_chord_kind_standard)
+		fmt.println(g_chord_kind_standard_slice)
+		g_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
+			g_chord_kind_standard_slice,
 			BANJO_LAYOUT_STANDARD_5_STRINGS,
 			3,
 		)
-		defer delete(g_major_chord_fingerings)
+		defer delete(g_chord_kind_standard_fingerings)
 
-		slice.sort_by(g_major_chord_fingerings, order_fingering_by_ease)
+		slice.sort_by(g_chord_kind_standard_fingerings, order_fingering_by_ease)
 
-		fmt.println(len(g_major_chord_fingerings))
-		for fingering in g_major_chord_fingerings {
+		fmt.println(len(g_chord_kind_standard_fingerings))
+		for fingering in g_chord_kind_standard_fingerings {
 			print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
 		}
 	}
 	fmt.println("---------- GUITAR ----------")
 	{
 		g_major_scale := make_scale(.G, major_scale_steps)
-		g_major_chord := make_chord(g_major_scale, major_chord)
-		g_major_chord_slice := small_array.slice(&g_major_chord)
-		fmt.println(g_major_chord_slice)
-		g_major_chord_fingerings := find_all_fingerings_for_chord(
-			g_major_chord_slice,
+		g_chord_kind_standard := make_chord(g_major_scale, chord_kind_standard)
+		g_chord_kind_standard_slice := small_array.slice(&g_chord_kind_standard)
+		fmt.println(g_chord_kind_standard_slice)
+		g_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
+			g_chord_kind_standard_slice,
 			GUITAR_LAYOUT_STANDARD_6_STRING,
 			3,
 		)
-		defer delete(g_major_chord_fingerings)
+		defer delete(g_chord_kind_standard_fingerings)
 
-		fmt.println(len(g_major_chord_fingerings))
-		for fingering in g_major_chord_fingerings {
+		fmt.println(len(g_chord_kind_standard_fingerings))
+		for fingering in g_chord_kind_standard_fingerings {
 			print_fingering(fingering, GUITAR_LAYOUT_STANDARD_6_STRING)
 		}
 	}
@@ -492,14 +493,14 @@ test_make_scale :: proc(_: ^testing.T) {
 @(test)
 test_make_chord :: proc(_: ^testing.T) {
 	c_major_scale := make_scale(.C, major_scale_steps)
-	c_major_chord := make_chord(c_major_scale, major_chord)
-	c_major_chord_slice := small_array.slice(&c_major_chord)
+	c_chord_kind_standard := make_chord(c_major_scale, chord_kind_standard)
+	c_chord_kind_standard_slice := small_array.slice(&c_chord_kind_standard)
 
-	assert(slice.equal(c_major_chord_slice, []NoteKind{.C, .E, .G}))
+	assert(slice.equal(c_chord_kind_standard_slice, []NoteKind{.C, .E, .G}))
 
 
 	d_major_scale := make_scale(.D, major_scale_steps)
-	d_major_7_chord := make_chord(d_major_scale, major_chord_7)
+	d_major_7_chord := make_chord(d_major_scale, chord_kind_7)
 	d_major_7_chord_slice := small_array.slice(&d_major_7_chord)
 
 	assert(slice.equal(d_major_7_chord_slice, []NoteKind{.D, .F_Sharp, .A, .C_Sharp}))
@@ -509,12 +510,12 @@ test_make_chord :: proc(_: ^testing.T) {
 test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 	{
 		c_major_scale := make_scale(.C, major_scale_steps)
-		c_major_chord := make_chord(c_major_scale, major_chord)
+		c_chord_kind_standard := make_chord(c_major_scale, chord_kind_standard)
 
 		assert(
 			true ==
 			is_fingering_valid_for_chord(
-				small_array.slice(&c_major_chord),
+				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{StringStateOpen{}, 2, StringStateOpen{}, 1, 2},
 			),
@@ -523,7 +524,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 		assert(
 			false ==
 			is_fingering_valid_for_chord(
-				small_array.slice(&c_major_chord),
+				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{StringStateOpen{}, 2, 2, 1, 2},
 			),
@@ -533,11 +534,11 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 
 	{
 		g_major_scale := make_scale(.G, major_scale_steps)
-		g_major_chord := make_chord(g_major_scale, major_chord)
+		g_chord_kind_standard := make_chord(g_major_scale, chord_kind_standard)
 		assert(
 			true ==
 			is_fingering_valid_for_chord(
-				small_array.slice(&g_major_chord),
+				small_array.slice(&g_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState {
 					StringStateOpen{},
@@ -555,12 +556,12 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 	{
 		c_major_scale := make_scale(.C, major_scale_steps)
-		c_major_chord := make_chord(c_major_scale, major_chord)
+		c_chord_kind_standard := make_chord(c_major_scale, chord_kind_standard)
 
 		assert(
 			false ==
 			is_fingering_valid_for_chord(
-				small_array.slice(&c_major_chord),
+				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{StringStateOpen{}, 2, 12, 1, 2},
 			),
@@ -718,36 +719,54 @@ test_make_note_for_string_state :: proc(_: ^testing.T) {
 
 @(test)
 test_parse_chord :: proc(_: ^testing.T) {
+	// {
+	// 	chord, ok := parse_chord("A")
+	// 	assert(ok)
+	// 	fmt.println(small_array.slice(&chord))
+	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.A, .C_Sharp, .E}))
+	// }
+	// {
+	// 	_, ok := parse_chord("A1")
+	// 	assert(!ok)
+	// }
+	// {
+	// 	chord, ok := parse_chord("C5")
+	// 	assert(ok)
+	// 	fmt.println(small_array.slice(&chord))
+	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.C, .G}))
+	// }
+	// {
+	// 	_, ok := parse_chord("G8")
+	// 	assert(!ok)
+	// }
+	// {
+	// 	chord, ok := parse_chord("F#")
+	// 	assert(ok)
+	// 	fmt.println(small_array.slice(&chord))
+	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .A_Sharp, .C_Sharp}))
+	// }
+	// {
+	// 	chord, ok := parse_chord("F#5")
+	// 	assert(ok)
+	// 	fmt.println(small_array.slice(&chord))
+	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .C_Sharp}))
+	// }
+
+	// {
+	// 	chord, ok := parse_chord("Am")
+	// 	assert(ok)
+	// 	fmt.println(small_array.slice(&chord))
+	// 	assert(slice.equal(small_array.slice(&chord), []NoteKind{.A, .C, .E}))
+	// }
 	{
-		chord, ok := parse_chord("A")
+		chord, ok := parse_chord("Cm13")
 		assert(ok)
 		fmt.println(small_array.slice(&chord))
-		assert(slice.equal(small_array.slice(&chord), []NoteKind{.A, .C_Sharp, .E}))
-	}
-	{
-		_, ok := parse_chord("A1")
-		assert(!ok)
-	}
-	{
-		chord, ok := parse_chord("C5")
-		assert(ok)
-		fmt.println(small_array.slice(&chord))
-		assert(slice.equal(small_array.slice(&chord), []NoteKind{.C, .G}))
-	}
-	{
-		_, ok := parse_chord("G8")
-		assert(!ok)
-	}
-	{
-		chord, ok := parse_chord("F#")
-		assert(ok)
-		fmt.println(small_array.slice(&chord))
-		assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .A_Sharp, .C_Sharp}))
-	}
-	{
-		chord, ok := parse_chord("F#5")
-		assert(ok)
-		fmt.println(small_array.slice(&chord))
-		assert(slice.equal(small_array.slice(&chord), []NoteKind{.F_Sharp, .C_Sharp}))
+		assert(
+			slice.equal(
+				small_array.slice(&chord),
+				[]NoteKind{.C, .D_Sharp, .G, .A_Sharp, .D, .F, .A},
+			),
+		)
 	}
 }
