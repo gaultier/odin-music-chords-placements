@@ -413,14 +413,14 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 	case 9:
 		return make_chord(scale, chord_kind_9), true
 	case 11:
-		res := make_chord(scale, chord_kind_11)
+		res = make_chord(scale, chord_kind_11)
 		if !minor {
 			// In case of a major, raise the 11th by a semi-tone to avoid dissonance.
 			res.data[small_array.len(res) - 1] = note_add(res.data[small_array.len(res) - 1], 1)
 		}
 		return res, true
 	case 13:
-		res := make_chord(scale, chord_kind_13)
+		res = make_chord(scale, chord_kind_13)
 		if minor {
 			// In case of a minor, raise the 13th by a semi-tone to avoid dissonance.
 			res.data[small_array.len(res) - 1] = note_add(res.data[small_array.len(res) - 1], 1)
