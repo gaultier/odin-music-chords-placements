@@ -328,8 +328,6 @@ print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstr
 		fret, ok := string_state.?
 		if !ok {
 			fmt.print("x")
-		} else if ok && fret == 0 {
-			fmt.print("o", note)
 		} else {
 			fmt.print(string_state, note)
 		}
@@ -346,30 +344,30 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 	chord_slice := transmute([]u8)chord
 	base_note_char, rest := slice.split_first(chord_slice)
 
-	sharp: bool
+	is_sharp: bool
 	if len(rest) > 0 && slice.first(rest) == '#' {
 		_, rest = slice.split_first(rest)
-		sharp = true
+		is_sharp = true
 	}
 
 	base_note := NoteKind.A
 	switch base_note_char {
 	case 'A':
-		base_note = .A_Sharp if sharp else .A
+		base_note = .A_Sharp if is_sharp else .A
 	case 'B':
-		if sharp {return {}, false}
+		if is_sharp {return {}, false}
 		base_note = .B
 	case 'C':
-		base_note = .C_Sharp if sharp else .C
+		base_note = .C_Sharp if is_sharp else .C
 	case 'D':
-		base_note = .D_Sharp if sharp else .D
+		base_note = .D_Sharp if is_sharp else .D
 	case 'E':
-		if sharp {return {}, false}
+		if is_sharp {return {}, false}
 		base_note = .E
 	case 'F':
-		base_note = .F_Sharp if sharp else .F
+		base_note = .F_Sharp if is_sharp else .F
 	case 'G':
-		base_note = .G_Sharp if sharp else .G
+		base_note = .G_Sharp if is_sharp else .G
 	case:
 		return {}, false
 	}
