@@ -171,9 +171,9 @@ is_fingering_valid_for_chord :: proc(
 	{
 		for finger, string_i in fingering {
 			string_layout := instrument_layout[string_i]
-			note, muted := make_note_for_string_state(finger, string_layout)
+			note, ok := make_note_for_string_state(finger, string_layout)
 			// If the string is muted, it cannot invalidate the chord.
-			if muted {continue}
+			if !ok {continue}
 
 			if !slice.contains(chord, note) {return false}
 		}
