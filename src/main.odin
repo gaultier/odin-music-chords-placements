@@ -240,10 +240,11 @@ next_fingering :: proc(
 }
 
 @(require_results)
+// Count non-muted strings.
 count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
 		_, ok := string_state.?
-		count += ok == true
+		count += (ok == true)
 	}
 	return
 }
@@ -252,9 +253,7 @@ count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 count_open_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
 		fret, ok := string_state.?
-		if ok && fret == 0 {
-			count += 1
-		}
+		count += (ok == true && fret == 0)
 	}
 	return
 }
