@@ -105,7 +105,7 @@ make_chord :: proc(scale: Scale, chord_kind: ChordKind) -> Chord {
 	res := Chord{}
 
 	for pos in chord_kind {
-		// `pos` is 1-indexed so we have to make it zero-index.
+		// `pos` is 1-indexed so we have to make it zero-indexed.
 		// We could go beyond the scale e.g. 9th, 11th, 13th, etc so we loop around with `%`.
 		pos := pos - 1 if pos <= 8 else pos
 		i := pos % 8
