@@ -14,8 +14,8 @@ const Note = {
 };
 
 const Step = {
-  Half = 1,
-  Whole = 2,
+  Half : 1,
+  Whole : 2,
 };
 
 const major_scale_steps = [Step.Whole, Step.Whole, Step.Half, Step.Whole, Step.Whole, Step.Whole, Step.Half];
@@ -28,10 +28,11 @@ function note_add_semitones(note, semitones) {
 function make_scale(base_note, scale_kind) {
   res = [base_note, 0, 0, 0, 0, 0, 0, 0];
 
-  for (let i=0; i<7; i+=1) {
-    res[i] = next_note_kind(res[i-1], scale[i-1]);
+  for (let i=1; i<res.length; i+=1) {
+    res[i] = note_add_semitones(res[i-1], scale_kind[i-1]);
   }
   return res;
 }
 
-console.log(note_add_semitones(Note.B, 3));
+const c_major_scale = make_scale(Note.C, major_scale_steps);
+console.log(c_major_scale);
