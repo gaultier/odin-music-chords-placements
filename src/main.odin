@@ -66,20 +66,15 @@ note_add_semitones :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
 }
 
 @(require_results)
-next_note_kind :: proc(note_kind: NoteKind, step: Step) -> NoteKind {
-	return note_add_semitones(note_kind, cast(u8)step)
-}
-
-@(require_results)
 make_scale :: proc(base_note: NoteKind, scale: ScaleKind) -> Scale {
 	res := Scale{}
 	res[0] = base_note
 
 	for i := 1; i < len(res); i += 1 {
-		res[i] = next_note_kind(res[i - 1], scale[i - 1])
+		res[i] = note_add_semitones(res[i - 1], cast(u8)scale[i - 1])
 	}
 
-	assert(next_note_kind(res[len(res) - 1], scale[len(scale) - 1]) == res[0])
+	assert(note_add_semitones(res[len(res) - 1], cast(u8)scale[len(scale) - 1]) == res[0])
 	assert(base_note == res[0])
 
 	return res
