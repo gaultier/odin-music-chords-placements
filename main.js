@@ -149,5 +149,24 @@ function next_fingering(fingering, instrument_layout) {
   return false;
 }
 
+function increment_string_state(string_state, string_layout) {
+  if (string_state == StringState.Muted) { 
+    string_state = 0; // FIXME
+    return true;
+  }
+  if (string_state == StringState.Open) {
+    string_state = string_layout.first_fret; // FIXME
+    return true;
+  }
+
+  if (string_state == string_layout.last_fret) {
+    string_state == StringState.Muted; // FIXME
+    return false;
+  }
+
+  string_state += 1; // FIXME
+  return true;
+}
+
 const c_major_scale = make_scale(Note.C, major_scale_steps);
 console.log(make_chord(c_major_scale, chord_kind_standard));
