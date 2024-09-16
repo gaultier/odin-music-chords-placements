@@ -21,6 +21,13 @@ const Step = {
 const major_scale_steps = [Step.Whole, Step.Whole, Step.Half, Step.Whole, Step.Whole, Step.Whole, Step.Half];
 const minor_scale_steps = [Step.Whole, Step.Half, Step.Whole, Step.Whole, Step.Half, Step.Whole, Step.Whole];
 
+const chord_kind_standard = [1, 3, 5];
+const chord_kind_5 = [1, 5];
+const chord_kind_7 = [1, 3, 5, 7];
+const chord_kind_9 = [1, 3, 5, 7, 9];
+const chord_kind_11 = [1, 3, 5, 7, 9, 11];
+const chord_kind_13 = [1, 3, 5, 7, 9, 13];
+
 function note_add_semitones(note, semitones) {
   return (note + semitones) % 12;
 }
@@ -34,5 +41,15 @@ function make_scale(base_note, scale_kind) {
   return res;
 }
 
+function make_chord(scale, chord_kind) {
+  res = [];
+
+  for (const pos of chord_kind) {
+    const i = (pos <= 8) ? pos - 1 : (pos % 8);
+    res.push(scale[i]);
+  }
+  return res;
+}
+
 const c_major_scale = make_scale(Note.C, major_scale_steps);
-console.log(c_major_scale);
+console.log(make_chord(c_major_scale, chord_kind_standard));
