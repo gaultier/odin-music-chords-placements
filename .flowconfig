@@ -1,0 +1,16 @@
+[ignore]
+
+[include]
+
+[libs]
+
+[lints]
+untyped-type-import=error
+internal-type=error
+deprecated-type-bool=error
+deprecated-type-dollar-call=error
+deprecated-type-predicate=error
+
+[options]
+
+[strict]

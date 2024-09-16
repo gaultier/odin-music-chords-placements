@@ -61,13 +61,13 @@ GUITAR_LAYOUT_STANDARD_6_STRING := StringInstrumentLayout {
 MAX_FINGER_DISTANCE :: 4
 
 @(require_results)
-note_add :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
+note_add_semitones :: proc(note_kind: NoteKind, offset: u8) -> NoteKind {
 	return cast(NoteKind)((cast(u8)note_kind + offset) % 12)
 }
 
 @(require_results)
 next_note_kind :: proc(note_kind: NoteKind, step: Step) -> NoteKind {
-	return note_add(note_kind, cast(u8)step)
+	return note_add_semitones(note_kind, cast(u8)step)
 }
 
 @(require_results)
@@ -317,7 +317,7 @@ make_note_for_string_state :: proc(
 	if fret == 0 {
 		return string_layout.open_note, true
 	}
-	return note_add(string_layout.open_note, fret), true
+	return note_add_semitones(string_layout.open_note, fret), true
 }
 
 print_fingering :: proc(fingering: []StringState, instrument_layout: StringInstrumentLayout) {
@@ -413,14 +413,20 @@ parse_chord :: proc(chord: string) -> (res: Chord, ok: bool) {
 		res = make_chord(scale, chord_kind_11)
 		if !is_minor {
 			// In case of a major, raise the 11th by a semi-tone to avoid dissonance.
-			res.data[small_array.len(res) - 1] = note_add(res.data[small_array.len(res) - 1], 1)
+			res.data[small_array.len(res) - 1] = note_add_semitones(
+				res.data[small_array.len(res) - 1],
+				1,
+			)
 		}
 		return res, true
 	case 13:
 		res = make_chord(scale, chord_kind_13)
 		if is_minor {
 			// In case of a minor, raise the 13th by a semi-tone to avoid dissonance.
-			res.data[small_array.len(res) - 1] = note_add(res.data[small_array.len(res) - 1], 1)
+			res.data[small_array.len(res) - 1] = note_add_semitones(
+				res.data[small_array.len(res) - 1],
+				1,
+			)
 		}
 		return res, true
 	case:
