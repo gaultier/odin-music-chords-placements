@@ -175,7 +175,8 @@ is_fingering_valid_for_chord :: proc(
 		finger_end_value, end_ok := finger_end.?
 		if start_ok && end_ok {
 			dist_squared :=
-				(finger_start_value - finger_end_value) * (finger_start_value - finger_end_value)
+				(uint(finger_start_value) - uint(finger_end_value)) *
+				(uint(finger_start_value) - uint(finger_end_value))
 
 			if dist_squared >= MAX_FINGER_DISTANCE * MAX_FINGER_DISTANCE {return false}
 		}
@@ -470,7 +471,7 @@ main :: proc() {
 	fmt.println("---------- Banjo C ----------")
 	{
 		c_major_scale := make_scale(.C, major_scale_steps)
-		c_chord_kind_standard := make_chord(c_major_scale, chord_kind_7)
+		c_chord_kind_standard := make_chord(c_major_scale, chord_kind_standard)
 		c_chord_kind_standard_slice := small_array.slice(&c_chord_kind_standard)
 		fmt.println(c_chord_kind_standard_slice)
 
@@ -589,6 +590,22 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{nil, nil, 3, 3, nil},
+				3,
+			),
+		)
+
+		// Distance too big.
+		assert(
+			false == is_fingering_valid_for_chord(
+				small_array.slice(&c_chord_kind_standard),
+				BANJO_LAYOUT_STANDARD_5_STRINGS,
+				[]StringState {
+					nil,
+					nil,
+					5, /* C */
+					1, /* C */
+					17, /* G */
+				},
 				3,
 			),
 		)
