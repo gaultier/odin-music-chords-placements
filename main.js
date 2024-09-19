@@ -96,7 +96,6 @@ function is_fingering_valid_for_chord(chord, instrument_layout, fingering) {
       const string_layout = instrument_layout[i];
       const finger = fingering[i];
       const {note, ok} = make_note_for_string_state(finger, string_layout);
-      console.log("[D001]", fingering, note, ok);
       if (!ok) {continue;}
 
 			// If the string is muted, it cannot invalidate the chord.
@@ -125,10 +124,8 @@ function find_all_fingerings_for_chord(chord, instrument_layout, note_count_at_l
   }
 
   while (next_fingering(fingering, instrument_layout)) {
-    console.log(fingering, is_fingering_valid_for_chord(chord, instrument_layout, fingering), count_notes_in_fingering(fingering));
     if (!is_fingering_valid_for_chord(chord, instrument_layout, fingering)) { continue; }
     if (count_notes_in_fingering(fingering) < note_count_at_least) { continue; }
-    console.log(fingering);
 
     res.push(fingering.slice());
   }
@@ -181,3 +178,5 @@ const c_major_scale = make_scale(Note.C, major_scale_steps);
 const c_chord_kind_standard = make_chord(c_major_scale, chord_kind_standard);
 console.log(c_chord_kind_standard);
 console.log(find_all_fingerings_for_chord(c_chord_kind_standard, BANJO_LAYOUT_STANDARD_5_STRINGS, 3));
+
+//     console.log(fingering, is_fingering_valid_for_chord(chord, instrument_layout, fingering), count_notes_in_fingering(fingering));

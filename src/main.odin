@@ -446,25 +446,25 @@ find_all_fingerings_json_for_chord_str :: proc(chord_str: string) -> []u8 {
 
 main :: proc() {
 
-	// fmt.println("---------- Banjo C ----------")
-	// {
-	// 	c_major_scale := make_scale(.C, major_scale_steps)
-	// 	c_chord_kind_standard := make_chord(c_major_scale, chord_kind_7)
-	// 	c_chord_kind_standard_slice := small_array.slice(&c_chord_kind_standard)
-	// 	fmt.println(c_chord_kind_standard_slice)
+	fmt.println("---------- Banjo C ----------")
+	{
+		c_major_scale := make_scale(.C, major_scale_steps)
+		c_chord_kind_standard := make_chord(c_major_scale, chord_kind_7)
+		c_chord_kind_standard_slice := small_array.slice(&c_chord_kind_standard)
+		fmt.println(c_chord_kind_standard_slice)
 
-	// 	c_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
-	// 		c_chord_kind_standard_slice,
-	// 		BANJO_LAYOUT_STANDARD_5_STRINGS,
-	// 		3,
-	// 	)
-	// 	defer delete(c_chord_kind_standard_fingerings)
+		c_chord_kind_standard_fingerings := find_all_fingerings_for_chord(
+			c_chord_kind_standard_slice,
+			BANJO_LAYOUT_STANDARD_5_STRINGS,
+			3,
+		)
+		defer delete(c_chord_kind_standard_fingerings)
 
-	// 	fmt.println(len(c_chord_kind_standard_fingerings))
-	// 	for fingering in c_chord_kind_standard_fingerings {
-	// 		print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
-	// 	}
-	// }
+		fmt.println(len(c_chord_kind_standard_fingerings))
+		for fingering in c_chord_kind_standard_fingerings {
+			print_fingering(fingering, BANJO_LAYOUT_STANDARD_5_STRINGS)
+		}
+	}
 	// fmt.println("---------- Banjo G ----------")
 	// {
 	// 	g_major_scale := make_scale(.G, major_scale_steps)
@@ -504,9 +504,9 @@ main :: proc() {
 	// 	}
 	// }
 
-	j := find_all_fingerings_json_for_chord_str("Am")
-	defer delete(j)
-	fmt.printf("%s", j)
+	// j := find_all_fingerings_json_for_chord_str("Am")
+	// defer delete(j)
+	// fmt.printf("%s", j)
 }
 
 @(test)
