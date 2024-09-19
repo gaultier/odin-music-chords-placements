@@ -123,22 +123,37 @@ StringLayout :: struct {
 StringInstrumentLayout :: []StringLayout
 
 @(require_results)
-fingering_min_max :: proc(
-	fingering: []StringState,
-) -> (
-	res_min: u8,
-	res_max: u8,
-	at_least_one_string_picked: bool,
-) {
+fingering_min_max :: proc(fingering: []StringState) -> (res_min: Maybe(u8), res_max: Maybe(u8)) {
 	for finger in fingering {
-		fret, ok := finger.?
-		if !ok {continue}
+		fret := finger.? or_continue
+
 		if fret == 0 {continue}
 
-		res_min = min(res_min, fret)
-		res_max = max(res_max, fret)
+		if res_min_value, ok := res_min.?; ok {
+			res_min = min(res_min_value, fret)
+		} else {
+			res_min = fret
+		}
+
+		if res_max_value, ok := res_max.?; ok {
+			res_max = max(res_max_value, fret)
+		} else {
+			res_max = fret
+		}
 	}
-	return res_min, res_max, res_max > 0
+
+	_, res_min_ok := res_min.?
+	_, res_max_ok := res_max.?
+
+	if res_min_ok && !res_max_ok {
+		res_max = res_min
+	}
+
+	if res_max_ok && !res_min_ok {
+		res_min = res_max
+	}
+
+	return res_min, res_max
 }
 
 
@@ -149,14 +164,18 @@ is_fingering_valid_for_chord :: proc(
 	// This array has as many entries as the instrument has strings.
 	// `fingering[a] = b` means: the string `a` is picked on fret `b`, or if `b == 0`, the string `a` is open.
 	fingering: []StringState,
+	note_count_at_least: u8,
 ) -> bool {
 	assert(len(fingering) == len(instrument_layout))
 
 	// Check that the distance between the first and last finger is <= MAX_FINGER_DISTANCE.
 	{
-		finger_start, finger_end, at_least_one_string_picked := fingering_min_max(fingering)
-		if at_least_one_string_picked {
-			dist_squared := (finger_start - finger_end) * (finger_start - finger_end)
+		finger_start, finger_end := fingering_min_max(fingering)
+		finger_start_value, start_ok := finger_start.?
+		finger_end_value, end_ok := finger_end.?
+		if start_ok && end_ok {
+			dist_squared :=
+				(finger_start_value - finger_end_value) * (finger_start_value - finger_end_value)
 
 			if dist_squared >= MAX_FINGER_DISTANCE * MAX_FINGER_DISTANCE {return false}
 		}
@@ -164,12 +183,25 @@ is_fingering_valid_for_chord :: proc(
 
 	// Check that the fingering abides by the chord.
 	{
+		notes: Chord
+
 		for finger, string_i in fingering {
 			string_layout := instrument_layout[string_i]
-			note, ok := make_note_for_string_state(finger, string_layout)
-			// If the string is muted, it cannot invalidate the chord.
-			if !ok {continue}
+			note := make_note_for_string_state(finger, string_layout) or_continue
 
+			small_array.append(&notes, note)
+		}
+
+		if small_array.len(notes) < int(note_count_at_least) {
+			return false
+		}
+		assert(small_array.len(notes) > 0)
+
+		if small_array.get(notes, 0) != chord[0] { 	// Prevent a seemingly valid chord but inverted e.g. `C/G`.
+			return false
+		}
+
+		for note in small_array.slice(&notes) {
 			if !slice.contains(chord, note) {return false}
 		}
 	}
@@ -235,16 +267,6 @@ next_fingering :: proc(
 }
 
 @(require_results)
-// Count non-muted strings.
-count_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
-	for string_state in fingering {
-		_, ok := string_state.?
-		count += (ok == true)
-	}
-	return
-}
-
-@(require_results)
 count_open_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
 	for string_state in fingering {
 		fret, ok := string_state.?
@@ -285,9 +307,8 @@ find_all_fingerings_for_chord :: proc(
 			chord,
 			instrument_layout,
 			small_array.slice(&fingering),
+			note_count_at_least,
 		) {continue}
-
-		if count_notes_in_fingering(fingering_slice) < note_count_at_least {continue}
 
 		clone, err := slice.clone(small_array.slice(&fingering))
 		if err != nil {panic("clone failed")}
@@ -540,21 +561,50 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 		c_major_scale := make_scale(.C, major_scale_steps)
 		c_chord_kind_standard := make_chord(c_major_scale, chord_kind_standard)
 
+		// `C/E`, invalid.
 		assert(
-			true ==
+			false ==
 			is_fingering_valid_for_chord(
 				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{0, 2, 0, 1, 2},
+				3,
 			),
 		)
-		// That's a C5 !
+		// `C5`, invalid.
 		assert(
 			false ==
 			is_fingering_valid_for_chord(
 				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{0, 2, 2, 1, 2},
+				3,
+			),
+		)
+
+		// Not enough notes.
+		assert(
+			false ==
+			is_fingering_valid_for_chord(
+				small_array.slice(&c_chord_kind_standard),
+				BANJO_LAYOUT_STANDARD_5_STRINGS,
+				[]StringState{nil, nil, 3, 3, nil},
+				3,
+			),
+		)
+		// Valid.
+		assert(
+			true == is_fingering_valid_for_chord(
+				small_array.slice(&c_chord_kind_standard),
+				BANJO_LAYOUT_STANDARD_5_STRINGS,
+				[]StringState {
+					nil,
+					nil,
+					5, /* C */
+					5, /* E */
+					5, /* G */
+				},
+				3,
 			),
 		)
 	}
@@ -569,6 +619,7 @@ test_valid_fingering_for_chord :: proc(_: ^testing.T) {
 				small_array.slice(&g_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{0, 0, 0, 0, 0},
+				3,
 			),
 		)
 	}
@@ -586,6 +637,7 @@ test_invalid_fingering_for_chord_distance_too_big :: proc(_: ^testing.T) {
 				small_array.slice(&c_chord_kind_standard),
 				BANJO_LAYOUT_STANDARD_5_STRINGS,
 				[]StringState{0, 2, 12, 1, 2},
+				3,
 			),
 		)
 	}
@@ -602,7 +654,7 @@ test_next_fingering :: proc(_: ^testing.T) {
 	assert(slice.equal([]StringState{0, 0, 0, 0, 2}, fingering))
 
 
-	fingering = []StringState{0, 0, 0, 0, 12}
+	fingering = []StringState{0, 0, 0, 0, BANJO_LAYOUT_STANDARD_5_STRINGS[4].last_fret}
 	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
 
 	fret: u8
@@ -620,7 +672,13 @@ test_next_fingering :: proc(_: ^testing.T) {
 	_, ok = fingering[4].?
 	assert(!ok)
 
-	fingering = []StringState{0, 12, 12, 12, 12}
+	fingering = []StringState {
+		0,
+		BANJO_LAYOUT_STANDARD_5_STRINGS[1].last_fret,
+		BANJO_LAYOUT_STANDARD_5_STRINGS[2].last_fret,
+		BANJO_LAYOUT_STANDARD_5_STRINGS[3].last_fret,
+		BANJO_LAYOUT_STANDARD_5_STRINGS[4].last_fret,
+	}
 	assert(true == next_fingering(&fingering, BANJO_LAYOUT_STANDARD_5_STRINGS))
 
 	fret, ok = fingering[0].?
