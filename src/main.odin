@@ -267,21 +267,13 @@ next_fingering :: proc(
 	return false
 }
 
-@(require_results)
-count_open_notes_in_fingering :: proc(fingering: []StringState) -> (count: u8) {
-	for string_state in fingering {
-		fret, ok := string_state.?
-		count += (ok == true && fret == 0)
-	}
-	return
-}
-
 // Order by open notes desc.
 @(require_results)
-order_fingering_by_ease :: proc(a: []StringState, b: []StringState) -> bool {
-	a_count := count_open_notes_in_fingering(a)
-	b_count := count_open_notes_in_fingering(b)
-	return b_count < a_count
+order_fingering_by_proximity_to_the_neck :: proc(a: []StringState, b: []StringState) -> bool {
+	a_min, a_max := fingering_min_max(a)
+	b_min, b_max := fingering_min_max(b)
+
+	return a_min.? < b_min.?
 }
 
 // Rules:
@@ -481,6 +473,8 @@ main :: proc() {
 			3,
 		)
 		defer delete(c_chord_kind_standard_fingerings)
+
+		slice.sort_by(c_chord_kind_standard_fingerings, order_fingering_by_proximity_to_the_neck)
 
 		fmt.println(len(c_chord_kind_standard_fingerings))
 		for fingering in c_chord_kind_standard_fingerings {
