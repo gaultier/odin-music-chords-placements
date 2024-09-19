@@ -28,7 +28,7 @@ const chord_kind_9 = [1, 3, 5, 7, 9];
 const chord_kind_11 = [1, 3, 5, 7, 9, 11];
 const chord_kind_13 = [1, 3, 5, 7, 9, 13];
 
-const banjo_layout_standard_5_strings = [
+const BANJO_LAYOUT_STANDARD_5_STRINGS = [
   {open_note: Note.G, first_fret: 5, last_fret: 17},
   {open_note: Note.D, first_fret: 1, last_fret: 17},
   {open_note: Note.G, first_fret: 1, last_fret: 17},
@@ -73,8 +73,8 @@ function fingering_min_max(fingering) {
     if (finger == StringState.Muted) { continue; }
     else if (finger == StringState.Open) { continue; }
 
-    res.min = fret < res.min ? fret : res.min;
-    res.max = res.max < fret ? fret : res.max;
+    res.min = finger < res.min ? finger : res.min;
+    res.max = res.max < finger ? finger : res.max;
   }
 
   return res;
@@ -94,19 +94,26 @@ function is_fingering_valid_for_chord(chord, instrument_layout, fingering) {
   {
     for (let i =0; i < fingering.length; i +=1 ) {
       const string_layout = instrument_layout[i];
-      const note = make_note_for_string_state(finger, string_layout);
+      const finger = fingering[i];
+      const {note, ok} = make_note_for_string_state(finger, string_layout);
+      console.log("[D001]", fingering, note, ok);
+      if (!ok) {continue;}
+
 			// If the string is muted, it cannot invalidate the chord.
       if (note == StringState.Muted) { continue; }
 
-      if (!chord.contains(note)) { return false; }
+      if (!chord.includes(note)) { return false; }
     }
   }
+
+  return true;
 }
 
 function make_note_for_string_state(string_state, string_layout) {
-  if (fret == StringState.Muted) { return 0; }
-  else if (fret == StringState.Open) { return string_layout.open_note; }
-  return note_add_semitones(string_layout.open_note, fret);
+  if (string_state == StringState.Muted) { return {note: Note.A, ok: false}; }
+
+  else if (string_state == StringState.Open) { return {note: string_layout.open_note, ok: true}; }
+  return {note: note_add_semitones(string_layout.open_note, string_state), ok: true};
 }
 
 function find_all_fingerings_for_chord(chord, instrument_layout, note_count_at_least) {
@@ -118,10 +125,12 @@ function find_all_fingerings_for_chord(chord, instrument_layout, note_count_at_l
   }
 
   while (next_fingering(fingering, instrument_layout)) {
+    console.log(fingering, is_fingering_valid_for_chord(chord, instrument_layout, fingering), count_notes_in_fingering(fingering));
     if (!is_fingering_valid_for_chord(chord, instrument_layout, fingering)) { continue; }
     if (count_notes_in_fingering(fingering) < note_count_at_least) { continue; }
+    console.log(fingering);
 
-    res.push(fingering);
+    res.push(fingering.slice());
   }
 
   return res;
@@ -138,9 +147,9 @@ function count_notes_in_fingering(fingering) {
 }
 
 function next_fingering(fingering, instrument_layout) {
-  for (let i =fingering.length; i>=0; i-=1) {
+  for (let i =fingering.length - 1; i>=0; i-=1) {
     const string_layout = instrument_layout[i];
-    const keep_going = increment_string_state(fingering[i], string_layout);
+    const keep_going = increment_string_state(fingering, i, string_layout);
     if (keep_going) return true;
     
 		// The slot has reached the maximum value, need to inspect the left-hand part to increment it, in the next loop iteration.
@@ -149,24 +158,26 @@ function next_fingering(fingering, instrument_layout) {
   return false;
 }
 
-function increment_string_state(string_state, string_layout) {
-  if (string_state == StringState.Muted) { 
-    string_state = 0; // FIXME
+function increment_string_state(fingering, i, string_layout) {
+  if (fingering[i] == StringState.Muted) { 
+    fingering[i] = StringState.Open;
     return true;
   }
-  if (string_state == StringState.Open) {
-    string_state = string_layout.first_fret; // FIXME
+  if (fingering[i] == StringState.Open) {
+    fingering[i] = string_layout.first_fret;
     return true;
   }
 
-  if (string_state == string_layout.last_fret) {
-    string_state == StringState.Muted; // FIXME
+  if (fingering[i] == string_layout.last_fret) {
+    fingering[i] = StringState.Muted;
     return false;
   }
 
-  string_state += 1; // FIXME
+  fingering[i] += 1;
   return true;
 }
 
 const c_major_scale = make_scale(Note.C, major_scale_steps);
-console.log(make_chord(c_major_scale, chord_kind_standard));
+const c_chord_kind_standard = make_chord(c_major_scale, chord_kind_standard);
+console.log(c_chord_kind_standard);
+console.log(find_all_fingerings_for_chord(c_chord_kind_standard, BANJO_LAYOUT_STANDARD_5_STRINGS, 3));
